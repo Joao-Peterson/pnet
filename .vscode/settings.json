@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "*.h": "c",
+        "*.c": "c",
+        ".clangd": "yaml",
+        "*.m": "octave",
+        "*.json": "jsonc",
+        "*.tcc": "c",
+        "fstream": "c"
+    }
+}

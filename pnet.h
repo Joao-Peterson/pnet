@@ -22,78 +22,165 @@
 #include "matrix.h"
 
 typedef enum{
-    end_options_pnet    = -1,
-    places_name_pnet,
-    places_init_pnet,
-    transitions_pnet,
-    arcs_pnet,
-    inhibit_arcs_pnet,
-    conditions_name_pnet,
-    input_name_pnet,
-    output_name_pnet,
-    conditions_map_pnet,
-    input_map_pnet,
-    output_map_pnet,
-    transitions_delay_pnet,
-    pnet_options_max
-}pnet_options_t;
+    pnet_event_none         = 0b00,
+    pnet_event_pos_edge     = 0b01,
+    pnet_event_neg_edge     = 0b10,
+    pnet_event_any_edge     = 0b11,
+    pnet_event_t_max
+}pnet_event_t;
 
-typedef enum{
-    pos_edge_pnet               = 0x01,
-    rise_edge_pnet              = 0x01,
-    neg_edge_pnet               = 0x02,
-    fall_edge_pnet              = 0x02,
-    any_edge_pnet               = 0x04,
-    toggle_up_down_pnet         = 0x08,
-    change_up_down_pnet         = 0x08,
-    toggle_down_up_pnet         = 0x10,
-    change_down_up_pnet         = 0x10,
-    toggle_pnet                 = 0x20,
-    change_pnet                 = 0x20,
-    toggle_any_pnet             = 0x20,
-    change_any_pnet             = 0x20
-}pnet_edge_t;
-
+/**
+ * @brief pnet places list, created by calling pnet_places_new()
+ */
 typedef struct{
-    matrix_string_t *places_name;
-    matrix_string_t *transitions;
-    matrix_string_t *conditions_name;
-    matrix_string_t *input_name;
-    matrix_string_t *output_name;
+    matrix_int_t *values;
+}pnet_places_t;
 
-    matrix_int_t *init_state;
-    matrix_int_t *arcs;
-    matrix_int_t *arcs_inhibit;
+/**
+ * @brief pnet transitions list, created by calling pnet_transitions_new()
+ */
+typedef struct{
+    matrix_int_t *values;
+}pnet_transitions_t;
+
+/**
+ * @brief pnet arcs map list, created by calling pnet_arcs_new()
+ */
+typedef struct{
+    matrix_int_t *values;
+}pnet_arcs_map_t;
+
+/**
+ * @brief pnet inputs map list, created by calling pnet_inputs_new()
+ */
+typedef struct{
+    matrix_int_t *values;
+}pnet_inputs_map_t;
+
+/**
+ * @brief pnet outputs map list, created by calling pnet_outputs_new()
+ */
+typedef struct{
+    matrix_int_t *values;
+}pnet_outputs_map_t;
+
+/**
+ * @brief pnet inputs, created by calling pnet_inputs_new()
+ */
+typedef struct{
+    matrix_int_t *values;
+}pnet_inputs_t;
+
+/**
+ * @brief struct that represents a petri net
+ */
+typedef struct{
+    // size
+    size_t num_places;
+    size_t num_transitions;
+    size_t num_inputs;
+    size_t num_outputs;
+
+    // maps
+    matrix_int_t *arcs_map; 
+    matrix_int_t *inhibit_arcs_map; 
+    matrix_int_t *reset_arcs_map;
+    matrix_int_t *places_init; 
     matrix_int_t *transitions_delay;
-    matrix_int_t *input;
-    matrix_int_t *input_edge;
-    matrix_int_t *input_last;
-    matrix_int_t *input_last_edge;
-    matrix_int_t *conditions;
-    matrix_int_t *output;
-    matrix_int_t *input_map;
-    matrix_int_t *conditions_map;
-    matrix_int_t *output_map;
+    matrix_int_t *inputs_map;
+    matrix_int_t *outputs_map;
 
-    matrix_int_t *w_minus;
-    matrix_int_t *places;
-    matrix_int_t *sensitive_transitions;
+    // net state
+    matrix_int_t *w_minus;                                                          /**< Tokens to be removed on transition fire */
+    matrix_int_t *places;                                                           /**< The actual places that hold tokens */
+    matrix_int_t *sensitive_transitions;                                            /**< Currently firable transitions */
+
+    // input edges state
+    matrix_int_t *inputs_last;                                                      /**< The last state of the inputs, used to make edge events */
+
+    // output values
+    matrix_int_t *outputs;                                                          /**< The actual output values produced by the petri net */
 }pnet_t;
 
-void pnet_w_minus_new(pnet_t *pnet);
+/**
+ * @brief Create a new petri net. All values from the inputs are freed automatically
+ * @param arcs_map: matrix of arcs weight/direction, where the rows are the places and the columns are the transitions. A positive value means a direction from transition to a place e a negative one otherwise. Can be null
+ * @param inhibit_arcs_map: matrix of arcs, where the coluns are the places and the rows are the transitions. Dictates the firing of a transition when a place has zero tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
+ * @param reset_arcs_map: matrix of arcs, where the coluns are the places and the rows are the transitions. When a transition occurs it zeroes out the place tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
+ * @param places_init: matrix of values, where the columns are the places. The initial values for the places. Values must be a positive value. Must be not null
+ * @param transitions_delay: matrix of values, were the columns are the transitions. While a place has enough tokens, the transitions will delay it's firing. Values must be positive, given is micro seconds (us). Can be null
+ * @param inputs_map: matrix where the columns are the transitions and the rows are inputs. Represents the type of event that will fire that transistion, given by the enumerator pnet_event_t. Can be null
+ * @param outputs_map: matrix where the columns are the transitions and the rows are outputs. An output is true when a place has one or more tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
+ * @return pnet_t struct pointer
+ */
+pnet_t *pnet_new(
+    pnet_arcs_map_t *arcs_map, 
+    pnet_arcs_map_t *inhibit_arcs_map, 
+    pnet_arcs_map_t *reset_arcs_map,
+    pnet_places_t *places_init, 
+    pnet_transitions_t *transitions_delay,
+    pnet_inputs_map_t *inputs_map,
+    pnet_outputs_map_t *outputs_map
+);
 
+/**
+ * @brief create new arcs map object
+ * @param transitions_num: number of transitions for the petri net 
+ * @param places_num: number of places for the petri net
+ * @param ...: the values for each index in the matrix, comma separeted
+ */
+pnet_arcs_map_t *pnet_arcs_map_new(size_t transitions_num, size_t places_num, ...);
+
+/**
+ * @brief create new places init object
+ * @param places_num: number of places for the petri net
+ * @param ...: the values for each index in the matrix, comma separeted
+ */
+pnet_places_t *pnet_places_init_new(size_t places_num, ...);
+
+/**
+ * @brief create new transitions delay object
+ * @param transitions_num: number of transitions for the petri net 
+ * @param ...: the values for each index in the matrix, comma separeted
+ */
+pnet_transitions_t *pnet_transitions_delay_new(size_t transitions_num, ...);
+
+/**
+ * @brief create new inputs map object
+ * @param transitions_num: number of transitions for the petri net 
+ * @param inputs_num: number of inputs for the petri net
+ * @param ...: the values for each index in the matrix, comma separeted
+ */
+pnet_inputs_map_t *pnet_inputs_map_new(size_t transitions_num, size_t inputs_num, ...);
+
+/**
+ * @brief create new outputs map object
+ * @param outputs_num: number of outputs for the petri net 
+ * @param places_num: number of places for the petri net
+ * @param ...: the values for each index in the matrix, comma separeted
+ */
+pnet_outputs_map_t *pnet_outputs_map_new(size_t outputs_num, size_t places_num, ...);
+
+/**
+ * @brief create new inputs object
+ * @param inputs_num: number of outputs for the petri net 
+ * @param ...: the values for each index in the matrix, comma separeted
+ */
+pnet_inputs_t *pnet_inputs_new(size_t inputs_num, ...);
+
+/**
+ * @brief delete a pnet
+ * @param pnet: the pnet struct pointer
+ */
 void pnet_delete(pnet_t *pnet);
 
+/**
+ * @brief fire the transitions based on the inputs and internal state
+ * @param pnet: the pnet struct pointer
+ * @param inputs: matrix of one row and columns the same size of the inputs given on pnet_new()
+ */
+void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs);
+
 void pnet_print(pnet_t *pnet);
-
-void pnet_sense(pnet_t *pnet);
-
-matrix_int_t *pnet_input_detection(pnet_t *pnet);
-
-void pnet_output_set(pnet_t *pnet);
-
-void pnet_fire(pnet_t *pnet, matrix_int_t *input, matrix_int_t *conditions);
-
-pnet_t *pnet_new(size_t places_num, size_t transitions_num, size_t conditions_num, size_t inputs_num, size_t output_num, ...);
 
 #endif

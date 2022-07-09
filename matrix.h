@@ -61,11 +61,15 @@ void matrix_print(matrix_int_t *matrix, char *name);
 
 matrix_int_t *matrix_mul(matrix_int_t *a, matrix_int_t *b);
 
+matrix_int_t *matrix_mul_by_element(matrix_int_t *a, matrix_int_t *b);
+
 matrix_int_t *matrix_mul_scalar(matrix_int_t *a, int c);
 
 matrix_int_t *matrix_add(matrix_int_t *a, matrix_int_t *b);
 
 matrix_int_t *matrix_and(matrix_int_t *a, matrix_int_t *b);
+
+matrix_int_t *matrix_neg(matrix_int_t *a);
 
 matrix_int_t *matrix_duplicate(matrix_int_t *a);
 

@@ -9,7 +9,7 @@
 #define PNET_DEF_ERR(enum) #enum
 
 // global error code
-static pnet_error_t error = pnet_error_ok;
+static pnet_error_t error = pnet_ok;
 
 // global error message
 char* error_msg = NULL;
@@ -17,7 +17,7 @@ bool error_msg_free = false;
 
 // static array error message list
 static const char* error_msg_list[] = {
-    PNET_DEF_ERR(pnet_error_ok),
+    PNET_DEF_ERR(pnet_ok),
     PNET_DEF_ERR(pnet_error_invalid_number_of_places_or_transitions)
 };
 

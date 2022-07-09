@@ -39,11 +39,11 @@ typedef enum{
 }pnet_options_t;
 
 typedef enum{
-    pos_edge_pnet               = 0x01,
+    pnet_event_pos_edge               = 0x01,
     rise_edge_pnet              = 0x01,
-    neg_edge_pnet               = 0x02,
+    pnet_event_neg_edge               = 0x02,
     fall_edge_pnet              = 0x02,
-    any_edge_pnet               = 0x04,
+    pnet_event_any_edge               = 0x04,
     toggle_up_down_pnet         = 0x08,
     change_up_down_pnet         = 0x08,
     toggle_down_up_pnet         = 0x10,
@@ -52,7 +52,7 @@ typedef enum{
     change_pnet                 = 0x20,
     toggle_any_pnet             = 0x20,
     change_any_pnet             = 0x20
-}pnet_edge_t;
+}pnet_event_t;
 
 typedef struct{
     matrix_string_t *places_name;
@@ -62,7 +62,7 @@ typedef struct{
     matrix_string_t *output_name;
 
     matrix_int_t *init_state;
-    matrix_int_t *arcs;
+    matrix_int_t *arcs_map;
     matrix_int_t *arcs_inhibit;
     matrix_int_t *transitions_delay;
     matrix_int_t *input;
