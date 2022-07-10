@@ -20,11 +20,11 @@
  * @brief enum of possible errors genrated bu the library
  */
 typedef enum{
-    pnet_ok = 0,                                                              /**< Everything is OK */
-
+    pnet_info_ok = 0,
     pnet_info_no_weighted_arcs_nor_inhibit_arcs_provided_no_transition_will_be_sensibilized,
     pnet_info_no_weighted_arcs_nor_reset_arcs_provided_no_token_will_be_moved_or_set,
 
+    pnet_error_no_arcs_were_given,                                    
     pnet_error_place_init_must_have_only_one_row,                                    
     pnet_error_transitions_delay_must_have_only_one_row,               
     pnet_error_places_init_must_not_be_null,               
@@ -35,10 +35,10 @@ typedef enum{
     pnet_error_places_init_has_incorrect_number_of_places_on_its_first_row,               
     pnet_error_transitions_delay_has_different_number_of_transitions_in_its_first_row_than_in_the_arcs,               
     pnet_error_inputs_has_different_number_of_transitions_in_its_first_row_than_in_the_arcs,               
+    pnet_error_inputs_there_are_more_than_one_input_per_transition,               
     pnet_error_outputs_has_different_number_of_places_in_its_first_columns_than_in_the_arcs,
     pnet_error_pnet_struct_pointer_passed_as_argument_is_null,
     pnet_error_input_matrix_argument_size_doesnt_match_the_input_size_on_the_pnet_provided,
-    pnet_error_input_matrix_argument_given_is_null,
 }pnet_error_t;
 
 /**

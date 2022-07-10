@@ -48,8 +48,6 @@ void matrix_string_print(matrix_string_t *matrix, char *name){
     }
 }
 
-
-
 matrix_int_t *v_matrix_new(size_t x, size_t y, va_list *args){
     matrix_int_t *matrix = (matrix_int_t*)calloc(1, sizeof(matrix_int_t));
     matrix->x = x;
@@ -266,3 +264,18 @@ matrix_int_t *matrix_transpose(matrix_int_t *matrix){
 
     return m;
 }
+
+bool matrix_cmp_eq(matrix_int_t *a, matrix_int_t *b){
+    if(a->x != b->x || a->y != b->y) return false;
+    bool res = true;
+
+    for (size_t i = 0; i < a->y; i++){
+        for (size_t j = 0; j < a->x; j++){
+            if(a->m[i][j] != b->m[i][j])
+                res = false;
+        }
+    }
+
+    return res;
+}
+

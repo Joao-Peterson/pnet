@@ -21,12 +21,15 @@
 #include "pnet_error.h"
 #include "matrix.h"
 
+/**
+ * @brief type of events used in the input/transition mapping 
+ */
 typedef enum{
-    pnet_event_none         = 0b00,
-    pnet_event_pos_edge     = 0b01,
-    pnet_event_neg_edge     = 0b10,
-    pnet_event_any_edge     = 0b11,
-    pnet_event_t_max
+    pnet_event_none         = 0b00,                                                 /**< No input event, transition will trigger if sensibilized. Same as 0 */
+    pnet_event_pos_edge     = 0b01,                                                 /**< The input must be 0 then 1 so the transition can trigger */
+    pnet_event_neg_edge     = 0b10,                                                 /**< The input must be 1 then 0 so the transition can trigger */
+    pnet_event_any_edge     = 0b11,                                                 /**< The input must be change state from 1 to 0 or vice versa */
+    pnet_event_t_max                                                                /**< Enumerator check value, don't use! */
 }pnet_event_t;
 
 /**
@@ -181,6 +184,16 @@ void pnet_delete(pnet_t *pnet);
  */
 void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs);
 
+/**
+ * @brief print the current state of the petri net to the stdout. Places, sensibilized transitions and outputs are printed
+ * @param pnet: the pnet struct pointer
+ */
 void pnet_print(pnet_t *pnet);
+
+/**
+ * @brief compute if the transitions are sensibilized
+ * @param pnet: the pnet struct pointer
+ */
+void pnet_sense(pnet_t *pnet);
 
 #endif

@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdarg.h>
 
 // ------------------------------ Structs ----------------------------------------
@@ -76,5 +77,7 @@ matrix_int_t *matrix_duplicate(matrix_int_t *a);
 void matrix_copy(matrix_int_t *dest, matrix_int_t *src);
 
 matrix_int_t *matrix_transpose(matrix_int_t *matrix);
+
+bool matrix_cmp_eq(matrix_int_t *a, matrix_int_t *b);
 
 #endif

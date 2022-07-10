@@ -92,6 +92,9 @@ install :
 	cp -r dist/*.h $(INSTALL_INC_DIR)/
 	cp -r dist/*.a $(INSTALL_LIB_DIR)/
 
+test : 
+	./build/test.exe
+
 clear : 
 	rm -f -r $(BUILD_DIR)*
 	rm -f -r $(DIST_DIR)*

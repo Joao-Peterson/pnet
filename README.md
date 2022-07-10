@@ -10,3 +10,8 @@ Supports the PNML standard with read/write functions!
 Created by João Peterson Scheffer - 2022. Version 1.0-0.
 
 Licensed under the MIT License. Please refeer to the LICENSE file in the project root for license information.
+
+# TODO
+
+- Don't make matrix.h visible to end user
+- Make special calls for readind the output, or make up another type of abstraction that don't involves matrix_int_t 
