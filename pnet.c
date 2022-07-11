@@ -6,7 +6,7 @@
 
 // ------------------------------ Private functions --------------------------------
 
-// creates a w_minus amtrix, that contains only information about the tokens to be removed after a transition
+// creates a w_minus matrix, that contains only information about the tokens to be removed after a transition
 void pnet_w_minus_new(pnet_t *pnet){
     for(size_t i = 0; i < pnet->arcs_map->y; i++){
         for(size_t j = 0; j < pnet->arcs_map->x; j++){

@@ -1,6 +1,4 @@
 # ---------------------------------------------------------------
-# https://www.rapidtables.com/code/linux/gcc/gcc-l.html <- how to link libs
-# 
 # Commands:
 # 	build 		: build lib objects and test file for testing 
 # 	release 	: build lib objects, archive and organize the lib files for use in the 'dist/' folder
@@ -8,6 +6,8 @@
 # 	clear 		: clear compiled executables
 # 	clearall 	: clear compiled objects and lib files in 'build/' and 'dist/' folders as well as executables
 # 	install  	: installs binaries, includes and libs to the specified "INSTALL_" path variables
+# 	test  		: runs the test binary 
+# 	label  		: update the author, year and version using sed in the specified files 
 
 CC := gcc
 

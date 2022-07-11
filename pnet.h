@@ -127,7 +127,7 @@ pnet_t *pnet_new(
 );
 
 /**
- * @brief create new arcs map object
+ * @brief create new arcs map object. It's freed by the calls that receive it as argument
  * @param transitions_num: number of transitions for the petri net 
  * @param places_num: number of places for the petri net
  * @param ...: the values for each index in the matrix, comma separeted
@@ -135,21 +135,21 @@ pnet_t *pnet_new(
 pnet_arcs_map_t *pnet_arcs_map_new(size_t transitions_num, size_t places_num, ...);
 
 /**
- * @brief create new places init object
+ * @brief create new places init object. It's freed by the calls that receive it as argument
  * @param places_num: number of places for the petri net
  * @param ...: the values for each index in the matrix, comma separeted
  */
 pnet_places_t *pnet_places_init_new(size_t places_num, ...);
 
 /**
- * @brief create new transitions delay object
+ * @brief create new transitions delay object. It's freed by the calls that receive it as argument
  * @param transitions_num: number of transitions for the petri net 
  * @param ...: the values for each index in the matrix, comma separeted
  */
 pnet_transitions_t *pnet_transitions_delay_new(size_t transitions_num, ...);
 
 /**
- * @brief create new inputs map object
+ * @brief create new inputs map object. It's freed by the calls that receive it as argument
  * @param transitions_num: number of transitions for the petri net 
  * @param inputs_num: number of inputs for the petri net
  * @param ...: the values for each index in the matrix, comma separeted
@@ -157,7 +157,7 @@ pnet_transitions_t *pnet_transitions_delay_new(size_t transitions_num, ...);
 pnet_inputs_map_t *pnet_inputs_map_new(size_t transitions_num, size_t inputs_num, ...);
 
 /**
- * @brief create new outputs map object
+ * @brief create new outputs map object. It's freed by the calls that receive it as argument
  * @param outputs_num: number of outputs for the petri net 
  * @param places_num: number of places for the petri net
  * @param ...: the values for each index in the matrix, comma separeted
@@ -165,7 +165,7 @@ pnet_inputs_map_t *pnet_inputs_map_new(size_t transitions_num, size_t inputs_num
 pnet_outputs_map_t *pnet_outputs_map_new(size_t outputs_num, size_t places_num, ...);
 
 /**
- * @brief create new inputs object
+ * @brief create new inputs object. It's freed by the calls that receive it as argument
  * @param inputs_num: number of outputs for the petri net 
  * @param ...: the values for each index in the matrix, comma separeted
  */

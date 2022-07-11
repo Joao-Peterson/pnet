@@ -7,5 +7,7 @@
         "*.json": "jsonc",
         "*.tcc": "c",
         "fstream": "c"
-    }
+    },
+    "cSpell.enabled": true,
+    "cSpell.language": "en-US",
 }
