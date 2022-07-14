@@ -44,7 +44,7 @@ int main(int argc, char **argv){
         NULL
     );
     test((pnet != NULL) && (pnet_get_error() == pnet_info_ok), "Test for non null return and err code ok");
-    if(pnet != NULL) pnet_delete(pnet);
+    pnet_delete(pnet);
 
     // #############################################################################
     // simple petrinet with 3 places and 2 transitions between them, uses all avaiable arcs types and inputs/outputs
@@ -86,7 +86,7 @@ int main(int argc, char **argv){
         )
     );
     test((pnet != NULL) && (pnet_get_error() == pnet_info_ok), "Test for creation with all arguments");
-    if(pnet != NULL) pnet_delete(pnet);
+    pnet_delete(pnet);
 
     // #############################################################################
     // test no args
@@ -107,7 +107,7 @@ int main(int argc, char **argv){
         NULL
     );
     test((pnet == NULL) && (pnet_get_error() == pnet_error_places_init_must_not_be_null), "Test for all null args");
-    if(pnet != NULL) pnet_delete(pnet);
+    pnet_delete(pnet);
 
     // #############################################################################
     // test with no arcs
@@ -122,7 +122,7 @@ int main(int argc, char **argv){
         NULL
     );
     test((pnet == NULL) && (pnet_get_error() == pnet_error_no_arcs_were_given), "Test for only places, no arcs");
-    if(pnet != NULL) pnet_delete(pnet);
+    pnet_delete(pnet);
 
     // #############################################################################
     // Test for autocorrection of values 
@@ -183,7 +183,7 @@ int main(int argc, char **argv){
         "Test for autocorrection of values "
     );
     
-    if(pnet != NULL) pnet_delete(pnet);
+    pnet_delete(pnet);
     matrix_delete(inhibit_arcs_map);
     matrix_delete(reset_arcs_map);
     matrix_delete(places_init);
@@ -228,7 +228,7 @@ int main(int argc, char **argv){
         (pnet_get_error() == pnet_info_no_neg_arcs_nor_inhibit_arcs_provided_no_transition_will_be_sensibilized), 
         "Test for no weighted or inhibit arcs"
     );
-    if(pnet != NULL) pnet_delete(pnet);
+    pnet_delete(pnet);
 
     // #############################################################################
     // Test for multiple inputs on a single transition
@@ -263,7 +263,7 @@ int main(int argc, char **argv){
         (pnet_get_error() == pnet_error_inputs_there_are_more_than_one_input_per_transition), 
         "Test for multiple inputs on a single transition"
     );
-    if(pnet != NULL) pnet_delete(pnet);
+    pnet_delete(pnet);
 
     // #############################################################################
     // Test sense 1
@@ -318,7 +318,7 @@ int main(int argc, char **argv){
         "Test sense 1"
     );
 
-    if(pnet != NULL) pnet_delete(pnet);
+    pnet_delete(pnet);
     matrix_delete(sense);
 
     // #############################################################################
@@ -361,7 +361,84 @@ int main(int argc, char **argv){
         "Test fire without weighted or reset arcs"
     );
     
-    if(pnet != NULL) pnet_delete(pnet);
+    pnet_delete(pnet);
+
+    // #############################################################################
+    // Test fire with inputs to null input map
+    pnet = pnet_new(
+        pnet_arcs_map_new(2,3,
+            -1, 0,
+             0, 0,
+             0, 0
+        ),
+        pnet_arcs_map_new(2,3,
+             0, 0,
+             1, 0,
+             0, 1
+        ),
+        NULL,
+        NULL,
+        pnet_places_init_new(3,
+            1, 0, 0
+        ),
+        NULL,
+        NULL,
+        pnet_outputs_map_new(3,3,
+            1,0,0,
+            0,1,0,
+            0,0,1
+        )
+    );
+
+    pnet_fire(pnet, pnet_inputs_new(2,0,0));
+
+    test(
+        (pnet != NULL) && 
+        (pnet_get_error() == pnet_info_inputs_were_passed_but_no_input_map_was_set_when_the_petri_net_was_created),
+        "Test fire with inputs to null input map"
+    );
+    
+    pnet_delete(pnet);
+
+    // #############################################################################
+    // Test fire with null inputs to non null input map
+    pnet = pnet_new(
+        pnet_arcs_map_new(2,3,
+            -1, 0,
+             0, 0,
+             0, 0
+        ),
+        pnet_arcs_map_new(2,3,
+             0, 0,
+             1, 0,
+             0, 1
+        ),
+        NULL,
+        NULL,
+        pnet_places_init_new(3,
+            1, 0, 0
+        ),
+        NULL,
+        pnet_inputs_map_new(2,2,
+            pnet_event_none, pnet_event_pos_edge,
+            pnet_event_none, pnet_event_none
+        ),
+        pnet_outputs_map_new(3,3,
+            1,0,0,
+            0,1,0,
+            0,0,1
+        )
+    );
+
+    pnet_fire(pnet, NULL);
+
+    test(
+        (pnet != NULL) && 
+        (pnet_get_error() == pnet_info_ok),
+        "Test fire with null inputs to non null input map"
+    );
+    
+    pnet_delete(pnet);
 
     // #############################################################################
     // Test firing logic
@@ -403,7 +480,7 @@ int main(int argc, char **argv){
         )
     );
 
-    // Test firing of transition without input map
+    // Test firing of transition with no input map
     pnet_fire(pnet, pnet_inputs_new(2, 0,0));
     // matrix_print(pnet->places,"places");
     matrix_int_t *places = matrix_new(3,1, 0,1,0);
@@ -412,7 +489,7 @@ int main(int argc, char **argv){
         (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
         (matrix_cmp_eq(pnet->places, places)),
-        "Test firing of transition without input map"
+        "Test firing of transition with no input map"
     );
 
     matrix_delete(places);
@@ -475,12 +552,14 @@ int main(int argc, char **argv){
     pnet_sense(pnet);
 
     test(
+        (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
         matrix_cmp_eq(pnet->sensitive_transitions, transitions), 
         "Test for transitions sensibilization for no input_map and null input for pnet_fire"
     );
     
     test(
+        (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
         matrix_cmp_eq(pnet->places, places), 
         "Test for mutual fire"
@@ -491,7 +570,7 @@ int main(int argc, char **argv){
     matrix_delete(transitions);
 
     // #############################################################################
-    // Test for multiple mutual transitions and a bidirected arc
+    // Test for multiple mutual transitions and a bidirectional arc
     pnet = pnet_new(
         pnet_arcs_map_new(3,5,
             -1,  0,  0,
@@ -514,32 +593,55 @@ int main(int argc, char **argv){
         ),
         NULL,
         NULL,
-        NULL
+        pnet_outputs_map_new(3,5,
+            0,0,0,
+            0,0,0,
+            1,0,0,
+            0,1,0,
+            0,0,1 
+        )
     );
 
     places = matrix_new(5,1, 0,0,1,0,1);
+    matrix_int_t *outputs = matrix_new(3,1, 0,0,0);
+
+    // Test for output state at start
+    test(
+        (pnet != NULL) && 
+        (pnet_get_error() == pnet_info_ok) &&
+        matrix_cmp_eq(pnet->outputs, outputs), 
+        "Test for output state at start"
+    );
 
     pnet_fire(pnet, NULL);
     pnet_fire(pnet, NULL);
     
     test(
+        (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
         matrix_cmp_eq(pnet->places, places), 
-        "Test for multiple mutual transitions and a bidirected arc"
+        "Test for multiple mutual transitions and a bidirectional arc"
+    );
+
+    matrix_delete(outputs);
+    outputs = matrix_new(3,1, 1,0,1);
+
+    // Test for output state at the end
+    test(
+        (pnet != NULL) && 
+        (pnet_get_error() == pnet_info_ok) &&
+        matrix_cmp_eq(pnet->outputs, outputs), 
+        "Test for output state at the end"
     );
 
     pnet_delete(pnet);
     matrix_delete(places);
+    matrix_delete(outputs);
 
     // #############################################################################
     test_summary();
 
-    // test outputs 
-    // test for simultaneous trasition firing. Do some research on how to implement correctly
-    // test for possible negative tokens
     // test for rush conditions with the timed transitions
-    // test for no input map and pass inputs to pnet fire
-    // test for input map and pass null inputs to pnet fire
 
     // pnet_t *pnet = pnet_new(5, 4, 1, 2, 3,
     //     places_name_pnet,

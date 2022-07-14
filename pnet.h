@@ -114,7 +114,7 @@ typedef struct{
  * @param places_init: matrix of values, where the columns are the places. The initial values for the places. Values must be a positive value. Must be not null
  * @param transitions_delay: matrix of values, were the columns are the transitions. While a place has enough tokens, the transitions will delay it's firing. Values must be positive, given is micro seconds (us). Can be null
  * @param inputs_map: matrix where the columns are the transitions and the rows are inputs. Represents the type of event that will fire that transistion, given by the enumerator pnet_event_t. Can be null
- * @param outputs_map: matrix where the columns are the transitions and the rows are outputs. An output is true when a place has one or more tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
+ * @param outputs_map: matrix where the columns are the outputs and the rows are places. An output is true when a place has one or more tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
  * @return pnet_t struct pointer
  */
 pnet_t *pnet_new(
@@ -126,6 +126,29 @@ pnet_t *pnet_new(
     pnet_transitions_t *transitions_delay,
     pnet_inputs_map_t *inputs_map,
     pnet_outputs_map_t *outputs_map
+);
+
+/**
+ * @brief Create a new petri net, uses matrix_int_t as argument type. All values from the inputs are freed automatically
+ * @param neg_arcs_map: matrix of arcs weight/direction, where the rows are the places and the columns are the transitions. Represents the number of tokens to be removed from a place. Only negative values. Can be null
+ * @param pos_arcs_map: matrix of arcs weight/direction, where the rows are the places and the columns are the transitions. Represents the number of tokens to be moved onto a place. Only positive values. Can be null
+ * @param inhibit_arcs_map: matrix of arcs, where the coluns are the places and the rows are the transitions. Dictates the firing of a transition when a place has zero tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
+ * @param reset_arcs_map: matrix of arcs, where the coluns are the places and the rows are the transitions. When a transition occurs it zeroes out the place tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
+ * @param places_init: matrix of values, where the columns are the places. The initial values for the places. Values must be a positive value. Must be not null
+ * @param transitions_delay: matrix of values, were the columns are the transitions. While a place has enough tokens, the transitions will delay it's firing. Values must be positive, given is micro seconds (us). Can be null
+ * @param inputs_map: matrix where the columns are the transitions and the rows are inputs. Represents the type of event that will fire that transistion, given by the enumerator pnet_event_t. Can be null
+ * @param outputs_map: matrix where the columns are the outputs and the rows are places. An output is true when a place has one or more tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
+ * @return pnet_t struct pointer
+ */
+pnet_t *m_pnet_new(
+    matrix_int_t *pos_arcs_map, 
+    matrix_int_t *neg_arcs_map, 
+    matrix_int_t *inhibit_arcs_map, 
+    matrix_int_t *reset_arcs_map,
+    matrix_int_t *places_init, 
+    matrix_int_t *transitions_delay,
+    matrix_int_t *inputs_map,
+    matrix_int_t *outputs_map
 );
 
 /**
