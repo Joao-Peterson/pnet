@@ -210,7 +210,7 @@ bool validate_pnet_args(
     return false;
 }
 
-// check for sensibilized transitions 
+// check for sensibilized transitions, one transition is retuned at a time
 void pnet_sense(pnet_t *pnet){
     if(pnet == NULL){
         pnet_set_error(pnet_error_pnet_struct_pointer_passed_as_argument_is_null);
@@ -252,6 +252,8 @@ void pnet_sense(pnet_t *pnet){
                 break;
             }                                                                        
         }
+
+        if(pnet->sensitive_transitions->m[0][transition] == 1) break;                           // return after the first transition is sensibilzed
     }
 }
 
@@ -497,7 +499,7 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
         return;
     } 
 
-    if((inputs != NULL) && (inputs->values->x != pnet->num_inputs)){                                      // return if inputs is not the same size as needed
+    if((inputs != NULL) && (inputs->values->x != pnet->num_inputs)){                // return if inputs is not the same size as needed
         pnet_set_error(pnet_error_input_matrix_argument_size_doesnt_match_the_input_size_on_the_pnet_provided);
         return;                                        
     }
@@ -506,8 +508,6 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
         pnet_set_error(pnet_info_no_weighted_arcs_nor_reset_arcs_provided_no_token_will_be_moved_or_set);
         return;
     }
-
-    pnet_sense(pnet);
 
     // get input events, the result are the transitions that where activated by the configured input/transitions event type
     matrix_int_t *input_event_transitions;
@@ -520,22 +520,25 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
         input_event_transitions = pnet_input_detection(pnet, NULL);
     }
 
+    // sense transitions
+    pnet_sense(pnet);
+
+
     #ifdef _PNET_DEBUG_
     matrix_print(pnet->sensitive_transitions, "sensitive_transitions");
     matrix_print(input_event_transitions, "input_event_transitions");
-    #endif
+    #endif 
     
     // transitions that are sensibilized and got the event 
     matrix_int_t *transitions_able_to_fire = matrix_and(input_event_transitions, pnet->sensitive_transitions);
-    matrix_int_t *transitions_able_to_fire_T = matrix_transpose(transitions_able_to_fire);
-    matrix_delete(transitions_able_to_fire);
-    matrix_delete(input_event_transitions);
 
     #ifdef _PNET_DEBUG_
-    matrix_print(transitions_able_to_fire_T, "transitions_able_to_fire_T");
+    matrix_print(transitions_able_to_fire, "transitions_able_to_fire");
     #endif
 
+    // will hold the results
     matrix_int_t *places_res = matrix_duplicate(pnet->places);
+    matrix_int_t *arcs_transposed = NULL;
     matrix_int_t *buffer = NULL;
     matrix_int_t *buffer2 = NULL;
 
@@ -543,15 +546,19 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
     if(pnet->arcs_map != NULL){
         // multiply the transitions by the arcs matrix, the effect is that the result matrix gives
         // the amount of tokens to be added/subtracted by every place
-        matrix_int_t *buffer = matrix_mul(pnet->arcs_map, transitions_able_to_fire_T);
-        matrix_int_t *buffer2 = matrix_transpose(buffer);
-        matrix_delete(buffer);
+        arcs_transposed = matrix_transpose(pnet->arcs_map);
+        matrix_int_t *buffer = matrix_mul(transitions_able_to_fire, arcs_transposed);
+
+        #ifdef _PNET_DEBUG_
+        matrix_print(buffer, "matrix_mul");
+        #endif
 
         // finnaly adding the difference in tokens for the places, effectly moving the tokens
-        buffer = matrix_add(pnet->places, buffer2);
-        matrix_copy(places_res, buffer);
+        buffer2 = matrix_add(pnet->places, buffer);
+        matrix_copy(places_res, buffer2);
         matrix_delete(buffer);
         matrix_delete(buffer2);
+        matrix_delete(arcs_transposed);
 
         #ifdef _PNET_DEBUG_
         matrix_print(places_res, "places_res");
@@ -562,22 +569,23 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
     if(pnet->reset_arcs_map != NULL){
         // multiply the transitions by the arcs matrix, the effect is that the result matrix marks
         // with 1, or more, if a place must be set to zero
-        buffer = matrix_mul(pnet->reset_arcs_map, transitions_able_to_fire_T);
-        buffer2 = matrix_transpose(buffer);
-        matrix_delete(buffer);
+        arcs_transposed = matrix_transpose(pnet->reset_arcs_map);
+        buffer = matrix_mul(transitions_able_to_fire, arcs_transposed);
 
         #ifdef _PNET_DEBUG_
-        matrix_print(buffer2, "buffer2");
+        matrix_print(buffer, "inhibit_arcs_matrix");
         #endif
         
         // negate so its a 0 for a place to be reset, in that way we can then multiply by it element by element, 
         // zeroing out the places where needed
-        buffer = matrix_neg(buffer2);
-        matrix_delete(buffer2); 
-        buffer2 = matrix_mul_by_element(buffer, places_res);
+        buffer2 = matrix_neg(buffer);
+        matrix_delete(buffer); 
+        buffer = matrix_mul_by_element(buffer2, places_res);
+        matrix_copy(places_res, buffer);
+
         matrix_delete(buffer);
-        matrix_copy(places_res, buffer2);
         matrix_delete(buffer2);
+        matrix_delete(arcs_transposed);
     }
 
     #ifdef _PNET_DEBUG_
@@ -586,12 +594,13 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
 
     // copy values to the pnet
     matrix_copy(pnet->places, places_res);
-    matrix_delete(places_res);
-    matrix_delete(transitions_able_to_fire_T);
 
     // do the output logic
     pnet_output_set(pnet);
 
+    matrix_delete(places_res);
+    matrix_delete(transitions_able_to_fire);
+    matrix_delete(input_event_transitions);
     pnet_set_error(pnet_info_ok);
 }
 

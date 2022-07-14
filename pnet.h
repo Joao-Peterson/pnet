@@ -178,7 +178,7 @@ pnet_inputs_t *pnet_inputs_new(size_t inputs_num, ...);
 void pnet_delete(pnet_t *pnet);
 
 /**
- * @brief fire the transitions based on the inputs and internal state
+ * @brief fire the transitions based on the inputs and internal state. Sensitive transitions are NOT updated after firing
  * @param pnet: the pnet struct pointer
  * @param inputs: matrix of one row and columns the same size of the inputs given on pnet_new()
  */

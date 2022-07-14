@@ -21,6 +21,7 @@ Licensed under the MIT License. Please reefer to the LICENSE file in the project
     - [Outputs](#outputs)
   - [Error handling](#error-handling)
 - [Compile and install](#compile-and-install)
+- [Implementation details](#implementation-details)
 - [TODO](#todo)
 
 # Usage
@@ -241,10 +242,15 @@ INSTALL_LIB_DIR
 INSTALL_INC_DIR
 ```
 
+# Implementation details
+
+This implementation uses matrix representation and custom independent algorithms by the author for sensing and firing the petri net.
+
 # TODO
 
 - Don't make matrix.h visible to end user
 - Make special calls for reading the output, or make up another type of abstraction that don't involves matrix_int_t 
+- Better abstraction for embedding purposes
 - Analysis tools
 - PNML support
 - Timed calls

@@ -373,6 +373,7 @@ int main(int argc, char **argv){
 
     // Test firing of transition without input map
     pnet_fire(pnet, pnet_inputs_new(2, 0,0));
+    // matrix_print(pnet->places,"places");
     matrix_int_t *places = matrix_new(3,1, 0,1,0);
 
     test(
@@ -417,9 +418,9 @@ int main(int argc, char **argv){
     // #############################################################################
     // Test for mutual fire
     pnet = pnet_new(
-        pnet_arcs_map_new(2,2,
-            -1, -1,
-             1,  1
+        pnet_arcs_map_new(3,2,
+            -1, -1, -1,
+             1,  1,  1
         ),
         NULL,
         NULL,
@@ -431,10 +432,11 @@ int main(int argc, char **argv){
         NULL
     );
 
-    places = matrix_new(2,1, -1, 2);
-    transitions = matrix_new(2,1, 1,1);
+    places = matrix_new(2,1, 0, 1);
+    transitions = matrix_new(3,1, 0,0,0);
 
     pnet_fire(pnet, NULL);
+    pnet_sense(pnet);
 
     test(
         (pnet_get_error() == pnet_info_ok) &&
@@ -446,6 +448,45 @@ int main(int argc, char **argv){
         (pnet_get_error() == pnet_info_ok) &&
         matrix_cmp_eq(pnet->places, places), 
         "Test for mutual fire"
+    );
+
+    pnet_delete(pnet);
+    matrix_delete(places);
+    matrix_delete(transitions);
+
+    // #############################################################################
+    // Test for multiple mutual transitions and 
+    pnet = pnet_new(
+        pnet_arcs_map_new(3,2,
+            -1, -1, -1,
+             1,  1,  1
+        ),
+        NULL,
+        NULL,
+        pnet_places_init_new(2,
+            1, 0
+        ),
+        NULL,
+        NULL,
+        NULL
+    );
+
+    places = matrix_new(2,1, 0, 1);
+    transitions = matrix_new(3,1, 0,0,0);
+
+    pnet_fire(pnet, NULL);
+    pnet_sense(pnet);
+
+    test(
+        (pnet_get_error() == pnet_info_ok) &&
+        matrix_cmp_eq(pnet->sensitive_transitions, transitions), 
+        "Test for transitions sensibilization for no input_map and null input for pnet_fire"
+    );
+    
+    test(
+        (pnet_get_error() == pnet_info_ok) &&
+        matrix_cmp_eq(pnet->places, places), 
+        "Test for multiple mutual transitions and "
     );
 
     pnet_delete(pnet);
