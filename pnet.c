@@ -6,20 +6,11 @@
 
 // ------------------------------ Private functions --------------------------------
 
-// creates a w_minus matrix, that contains only information about the tokens to be removed after a transition
-void pnet_w_minus_new(pnet_t *pnet){
-    for(size_t i = 0; i < pnet->arcs_map->y; i++){
-        for(size_t j = 0; j < pnet->arcs_map->x; j++){
-            if(pnet->w_minus->m[i][j] >= 0)
-                pnet->w_minus->m[i][j] = 0;
-        }
-    }
-}
-
 // validate input arguments to pnet_new() and get the number of places, transitions, inputs and outputs
 bool validate_pnet_args(
     pnet_t *pnet, 
-    pnet_arcs_map_t *arcs_map, 
+    pnet_arcs_map_t *neg_arcs_map, 
+    pnet_arcs_map_t *pos_arcs_map, 
     pnet_arcs_map_t *inhibit_arcs_map, 
     pnet_arcs_map_t *reset_arcs_map,
     pnet_places_t *places_init, 
@@ -38,12 +29,46 @@ bool validate_pnet_args(
     size_t inputs_num = 0;
     size_t outputs_num = 0;
 
-    // checks for each argument
-    if(arcs_map != NULL && transitions_num == 0 && places_num == 0){
-        transitions_num = arcs_map->values->x;
-        places_num = arcs_map->values->y;
+    // checks negative arcs
+    if(neg_arcs_map != NULL && transitions_num == 0 && places_num == 0){
+        transitions_num = neg_arcs_map->values->x;
+        places_num = neg_arcs_map->values->y;
+
+        // check for positive values
+        for(size_t i = 0; i < neg_arcs_map->values->y; i++){
+            for(size_t j = 0; j < neg_arcs_map->values->x; j++){
+                if(neg_arcs_map->values->m[i][j] > 0) neg_arcs_map->values->m[i][j] = 0;
+            }
+        }
     }
     
+    // positive arcs
+    if(pos_arcs_map != NULL){
+        if(transitions_num == 0 && places_num == 0){
+            transitions_num = pos_arcs_map->values->x;
+            places_num = pos_arcs_map->values->y;
+        }
+        else{
+            // check for incorrect size
+            if(transitions_num != pos_arcs_map->values->x){
+                pnet_set_error(pnet_error_pos_arcs_has_incorrect_number_of_transitions);
+                return true;
+            }
+            if(places_num != pos_arcs_map->values->y){
+                pnet_set_error(pnet_error_pos_arcs_has_incorrect_number_of_places);
+                return true;
+            }
+        }
+
+        // check for positive values
+        for(size_t i = 0; i < pos_arcs_map->values->y; i++){
+            for(size_t j = 0; j < pos_arcs_map->values->x; j++){
+                if(pos_arcs_map->values->m[i][j] < 0) pos_arcs_map->values->m[i][j] = 0;
+            }
+        }
+    }
+
+    // inhibit arcs
     if(inhibit_arcs_map != NULL){
         if(transitions_num == 0 && places_num == 0){
             transitions_num = inhibit_arcs_map->values->x;
@@ -69,6 +94,7 @@ bool validate_pnet_args(
         }
     }
 
+    // reset arcs
     if(reset_arcs_map != NULL){
         if(transitions_num == 0 && places_num == 0){
             transitions_num = reset_arcs_map->values->x;
@@ -99,7 +125,8 @@ bool validate_pnet_args(
         pnet_set_error(pnet_error_no_arcs_were_given);
         return true;
     }
-    
+
+    // places init    
     if(places_init != NULL){
         if(transitions_num == 0 && places_num == 0){
             places_num = places_init->values->x;
@@ -127,6 +154,7 @@ bool validate_pnet_args(
         }
     }
 
+    // transition delay
     if(transitions_delay != NULL){
         // check for incorrect size
         if(transitions_num != transitions_delay->values->x){
@@ -147,6 +175,7 @@ bool validate_pnet_args(
         }
     }
 
+    // inputs
     if(inputs_map != NULL){
         // check for incorrect size
         if(transitions_num != inputs_map->values->x){
@@ -185,6 +214,7 @@ bool validate_pnet_args(
         inputs_num = inputs_map->values->y;
     }
 
+    // outputs
     if(outputs_map != NULL){
         // check for incorrect size
         if(places_num != outputs_map->values->y){
@@ -202,59 +232,13 @@ bool validate_pnet_args(
         outputs_num = outputs_map->values->x;
     }
     
+    // save sizes
     pnet->num_places = places_num;
     pnet->num_transitions = transitions_num;
     pnet->num_inputs = inputs_num;
     pnet->num_outputs = outputs_num;
 
     return false;
-}
-
-// check for sensibilized transitions, one transition is retuned at a time
-void pnet_sense(pnet_t *pnet){
-    if(pnet == NULL){
-        pnet_set_error(pnet_error_pnet_struct_pointer_passed_as_argument_is_null);
-        return;
-    } 
-
-    if(pnet->arcs_map == NULL && pnet->inhibit_arcs_map == NULL){                   // if no arcs to fire 
-        pnet_set_error(pnet_info_no_weighted_arcs_nor_inhibit_arcs_provided_no_transition_will_be_sensibilized);
-        return;
-    } 
-
-    for(size_t transition = 0; transition < pnet->num_transitions; transition++){
-        pnet->sensitive_transitions->m[0][transition] = 1;                          // set transition to sensibilized
-        for(size_t place = 0; place < pnet->num_places; place++){
-
-            /**
-             * to fire, sufficient tokens must be available, 
-             * by adding the existing token to the required tokens, w_minus, we can compare to see
-             * if the transition is firable, that is, after the sum, the transition column should
-             * be zero or bigger, indicating that there are enought or more tokens to satisfy the
-             * subtraction.
-             */
-            
-            if(
-                // weighted arcs
-                (
-                    (pnet->w_minus != NULL) &&                                                  // when there are weighted arcs
-                    (pnet->w_minus->m[place][transition] != 0) &&                               // when there is a requirement for this transition/place
-                    ((pnet->w_minus->m[place][transition] + pnet->places->m[0][place]) < 0)     // and there is not enough tokens
-                ) ||
-                // inhibit arcs          
-                (
-                    (pnet->inhibit_arcs_map != NULL) &&                                         // when there are inhibit arcs
-                    (pnet->inhibit_arcs_map->m[place][transition] == 1) &&                      // if there is a inhibit arc
-                    (pnet->places->m[0][place] != 0)                                            // and place has token, then do not trigger, otherwise trigger
-                )
-            ){
-                pnet->sensitive_transitions->m[0][transition] = 0;                              // desensibilize
-                break;
-            }                                                                        
-        }
-
-        if(pnet->sensitive_transitions->m[0][transition] == 1) break;                           // return after the first transition is sensibilzed
-    }
 }
 
 // process input data for edge events
@@ -341,7 +325,8 @@ void pnet_output_set(pnet_t *pnet){
 
 // create pnet
 pnet_t *pnet_new(
-    pnet_arcs_map_t *arcs_map, 
+    pnet_arcs_map_t *neg_arcs_map, 
+    pnet_arcs_map_t *pos_arcs_map, 
     pnet_arcs_map_t *inhibit_arcs_map, 
     pnet_arcs_map_t *reset_arcs_map,
     pnet_places_t *places_init, 
@@ -354,7 +339,8 @@ pnet_t *pnet_new(
     // check for errors and get sizes
     if(validate_pnet_args(
         pnet,
-        arcs_map, 
+        neg_arcs_map, 
+        pos_arcs_map, 
         inhibit_arcs_map, 
         reset_arcs_map,
         places_init, 
@@ -366,10 +352,14 @@ pnet_t *pnet_new(
         return NULL;
     } 
     
-    // copy matrixes
-    if(arcs_map != NULL){
-        pnet->arcs_map = arcs_map->values;  
-        free(arcs_map);
+    // copy matrices
+    if(neg_arcs_map != NULL){
+        pnet->neg_arcs_map = neg_arcs_map->values;  
+        free(neg_arcs_map);
+    }
+    if(pos_arcs_map != NULL){
+        pnet->pos_arcs_map = pos_arcs_map->values;  
+        free(pos_arcs_map);
     }
     if(inhibit_arcs_map != NULL){
         pnet->inhibit_arcs_map = inhibit_arcs_map->values;  
@@ -394,12 +384,6 @@ pnet_t *pnet_new(
     if(outputs_map != NULL){
         pnet->outputs_map = outputs_map->values; 
         free(outputs_map);
-    }
-
-    // create subtration w_minus matrix
-    if(pnet->arcs_map != NULL){
-        pnet->w_minus = matrix_duplicate(pnet->arcs_map);
-        pnet_w_minus_new(pnet);
     }
 
     pnet->places = matrix_duplicate(pnet->places_init);
@@ -477,19 +461,66 @@ void pnet_delete(pnet_t *pnet){
         pnet_set_error(pnet_error_pnet_struct_pointer_passed_as_argument_is_null);
         return;
     } 
-    matrix_delete(pnet->arcs_map); 
+    matrix_delete(pnet->pos_arcs_map); 
+    matrix_delete(pnet->neg_arcs_map); 
     matrix_delete(pnet->inhibit_arcs_map); 
     matrix_delete(pnet->reset_arcs_map);
     matrix_delete(pnet->places_init); 
     matrix_delete(pnet->transitions_delay);
     matrix_delete(pnet->inputs_map);
     matrix_delete(pnet->outputs_map);
-    matrix_delete(pnet->w_minus);
     matrix_delete(pnet->places);
     matrix_delete(pnet->sensitive_transitions);
     matrix_delete(pnet->inputs_last);
     matrix_delete(pnet->outputs);
     free(pnet);
+}
+
+// check for sensibilized transitions, one transition is retuned at a time
+void pnet_sense(pnet_t *pnet){
+    if(pnet == NULL){
+        pnet_set_error(pnet_error_pnet_struct_pointer_passed_as_argument_is_null);
+        return;
+    } 
+
+    if(pnet->neg_arcs_map == NULL && pnet->inhibit_arcs_map == NULL){               // if no arcs to fire 
+        pnet_set_error(pnet_info_no_neg_arcs_nor_inhibit_arcs_provided_no_transition_will_be_sensibilized);
+        return;
+    } 
+
+    for(size_t transition = 0; transition < pnet->num_transitions; transition++){
+        pnet->sensitive_transitions->m[0][transition] = 1;                          // set transition to sensibilized
+        for(size_t place = 0; place < pnet->num_places; place++){
+
+            /**
+             * to fire, sufficient tokens must be available, 
+             * by adding the existing token to the required tokens, w_minus, we can compare to see
+             * if the transition is firable, that is, after the sum, the transition column should
+             * be zero or bigger, indicating that there are enought or more tokens to satisfy the
+             * subtraction.
+             */
+            
+            if(
+                // negative arcs
+                (
+                    (pnet->neg_arcs_map != NULL) &&                                                 // when there are negative arcs
+                    (pnet->neg_arcs_map->m[place][transition] != 0) &&                              // when there is a requirement for this transition/place
+                    ((pnet->neg_arcs_map->m[place][transition] + pnet->places->m[0][place]) < 0)    // and there is not enough tokens
+                ) ||
+                // inhibit arcs          
+                (
+                    (pnet->inhibit_arcs_map != NULL) &&                                             // when there are inhibit arcs
+                    (pnet->inhibit_arcs_map->m[place][transition] == 1) &&                          // if there is a inhibit arc
+                    (pnet->places->m[0][place] != 0)                                                // and place has token, then do not trigger, otherwise trigger
+                )
+            ){
+                pnet->sensitive_transitions->m[0][transition] = 0;                                  // desensibilize
+                break;
+            }                                                                        
+        }
+
+        if(pnet->sensitive_transitions->m[0][transition] == 1) break;                               // return after the first transition is sensibilzed
+    }
 }
 
 // fire the transitions
@@ -499,12 +530,18 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
         return;
     } 
 
-    if((inputs != NULL) && (inputs->values->x != pnet->num_inputs)){                // return if inputs is not the same size as needed
+    // return if inputs is not the same size as needed
+    if((inputs != NULL) && (inputs->values->x != pnet->num_inputs)){                
         pnet_set_error(pnet_error_input_matrix_argument_size_doesnt_match_the_input_size_on_the_pnet_provided);
         return;                                        
     }
 
-    if(pnet->arcs_map == NULL && pnet->reset_arcs_map == NULL){                     // if no arcs, then no tokens will be moved/set
+    // if no arcs, then no tokens will be moved/set
+    if(                                                                             
+        pnet->neg_arcs_map == NULL && 
+        pnet->pos_arcs_map == NULL && 
+        pnet->reset_arcs_map == NULL
+    ){                 
         pnet_set_error(pnet_info_no_weighted_arcs_nor_reset_arcs_provided_no_token_will_be_moved_or_set);
         return;
     }
@@ -542,11 +579,22 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
     matrix_int_t *buffer = NULL;
     matrix_int_t *buffer2 = NULL;
 
-    // for weighted arcs
-    if(pnet->arcs_map != NULL){
+    // for weighted arcs, only if at least one of them is not null
+    if(pnet->pos_arcs_map != NULL || pnet->neg_arcs_map != NULL){
+        
+        matrix_int_t *weighted_matrix = NULL;
+
+        // sum pos and neg arcs first, if null then use the non null one
+        if(pnet->pos_arcs_map != NULL && pnet->neg_arcs_map != NULL)
+            weighted_matrix = matrix_add(pnet->neg_arcs_map, pnet->pos_arcs_map);
+        else if(pnet->pos_arcs_map != NULL)
+            weighted_matrix = matrix_duplicate(pnet->pos_arcs_map);
+        else if(pnet->neg_arcs_map != NULL)
+            weighted_matrix = matrix_duplicate(pnet->neg_arcs_map);
+
         // multiply the transitions by the arcs matrix, the effect is that the result matrix gives
         // the amount of tokens to be added/subtracted by every place
-        arcs_transposed = matrix_transpose(pnet->arcs_map);
+        arcs_transposed = matrix_transpose(weighted_matrix);
         matrix_int_t *buffer = matrix_mul(transitions_able_to_fire, arcs_transposed);
 
         #ifdef _PNET_DEBUG_
@@ -558,6 +606,7 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
         matrix_copy(places_res, buffer2);
         matrix_delete(buffer);
         matrix_delete(buffer2);
+        matrix_delete(weighted_matrix);
         matrix_delete(arcs_transposed);
 
         #ifdef _PNET_DEBUG_

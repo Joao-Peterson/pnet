@@ -85,7 +85,8 @@ typedef struct{
     size_t num_outputs;
 
     // maps
-    matrix_int_t *arcs_map; 
+    matrix_int_t *neg_arcs_map; 
+    matrix_int_t *pos_arcs_map; 
     matrix_int_t *inhibit_arcs_map; 
     matrix_int_t *reset_arcs_map;
     matrix_int_t *places_init; 
@@ -94,7 +95,6 @@ typedef struct{
     matrix_int_t *outputs_map;
 
     // net state
-    matrix_int_t *w_minus;                                                          /**< Tokens to be removed on transition fire */
     matrix_int_t *places;                                                           /**< The actual places that hold tokens */
     matrix_int_t *sensitive_transitions;                                            /**< Currently firable transitions */
 
@@ -107,7 +107,8 @@ typedef struct{
 
 /**
  * @brief Create a new petri net. All values from the inputs are freed automatically
- * @param arcs_map: matrix of arcs weight/direction, where the rows are the places and the columns are the transitions. A positive value means a direction from transition to a place e a negative one otherwise. Can be null
+ * @param neg_arcs_map: matrix of arcs weight/direction, where the rows are the places and the columns are the transitions. Represents the number of tokens to be removed from a place. Only negative values. Can be null
+ * @param pos_arcs_map: matrix of arcs weight/direction, where the rows are the places and the columns are the transitions. Represents the number of tokens to be moved onto a place. Only positive values. Can be null
  * @param inhibit_arcs_map: matrix of arcs, where the coluns are the places and the rows are the transitions. Dictates the firing of a transition when a place has zero tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
  * @param reset_arcs_map: matrix of arcs, where the coluns are the places and the rows are the transitions. When a transition occurs it zeroes out the place tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
  * @param places_init: matrix of values, where the columns are the places. The initial values for the places. Values must be a positive value. Must be not null
@@ -117,7 +118,8 @@ typedef struct{
  * @return pnet_t struct pointer
  */
 pnet_t *pnet_new(
-    pnet_arcs_map_t *arcs_map, 
+    pnet_arcs_map_t *pos_arcs_map, 
+    pnet_arcs_map_t *neg_arcs_map, 
     pnet_arcs_map_t *inhibit_arcs_map, 
     pnet_arcs_map_t *reset_arcs_map,
     pnet_places_t *places_init, 

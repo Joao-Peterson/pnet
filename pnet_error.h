@@ -21,13 +21,14 @@
  */
 typedef enum{
     pnet_info_ok = 0,
-    pnet_info_no_weighted_arcs_nor_inhibit_arcs_provided_no_transition_will_be_sensibilized,
+    pnet_info_no_neg_arcs_nor_inhibit_arcs_provided_no_transition_will_be_sensibilized,
     pnet_info_no_weighted_arcs_nor_reset_arcs_provided_no_token_will_be_moved_or_set,
-
     pnet_error_no_arcs_were_given,                                    
     pnet_error_place_init_must_have_only_one_row,                                    
     pnet_error_transitions_delay_must_have_only_one_row,               
     pnet_error_places_init_must_not_be_null,               
+    pnet_error_pos_arcs_has_incorrect_number_of_places,               
+    pnet_error_pos_arcs_has_incorrect_number_of_transitions,               
     pnet_error_inhibit_arcs_has_incorrect_number_of_places,               
     pnet_error_inhibit_arcs_has_incorrect_number_of_transitions,               
     pnet_error_reset_arcs_has_incorrect_number_of_places,               

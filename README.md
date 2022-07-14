@@ -38,8 +38,13 @@ The you can create a new petri net:
 pnet_t *pnet = pnet_new(
     pnet_arcs_map_new(2,3,
         -1, 0,
-            1, 0,
-            0, 1
+         0, 0,
+         0, 0
+    ),
+    pnet_arcs_map_new(2,3,
+         0, 0,
+         1, 0,
+         0, 1
     ),
     pnet_arcs_map_new(2,3,
             0, 1,
@@ -69,13 +74,17 @@ pnet_t *pnet = pnet_new(
 ); 
 ```
 
-Note how you can pass weighted arcs, inhibit arcs, reset arcs, the initial tokens for the places, delay for transitions, inputs events and outputs in order, however, only the `places_init` and one type of arc are required, so very simple declarations can be made:
+Note how you can pass weighted arcs, inhibit arcs, reset arcs, the initial tokens for the places, delay for transitions, inputs events and outputs in order, however, only the `places_init` and **at least one** type of arc are required, so very simple declarations can be made, like this:
 
 ```c    
 pnet_t *pnet = pnet_new(
     pnet_arcs_map_new(1,2,
         -1,
-            1
+        0
+    ),
+    pnet_arcs_map_new(1,2,
+        0, 
+        1
     ),
     NULL,
     NULL,
@@ -100,18 +109,23 @@ This will execute one transition at a time, so the execution is made in stepped 
 
 ### Weighted arcs
 
-Weighted arcs define the amount of token that are consumed and given by some transitions. Represented in matrix form, it's shape should be:
+Weighted arcs define the amount of token that are consumed and given by some transition. Represented in matrix form by two matrices, it's shape should be like:
 
 ```c
 pnet_arcs_map_new(2,3,
     -1, 0,
+     0, 0,
+     0, 0
+),
+pnet_arcs_map_new(2,3,
+     0, 0,
      1, 0,
      0, 1
 ),
 
 ```
 
-Where 2 is the amount of transitions, and 3 the amount of places, notice how the columns represent the transitions and rows the places. In the example we are telling that for the first transition, 1 token will be consumed from the first place, and 1 token will be given to the second place, and for the second transition, a token will be given to the third place.
+The first matrix are the positive weights, the second are the negative weights. Where 2 is the amount of transitions, and 3 the amount of places, notice how the columns represent the transitions and rows the places. In the example we are telling that for the first transition, 1 token will be consumed from the first place, and 1 token will be given to the second place, and for the second transition, a token will be given to the third place.
 
 When there are no negative weights, a transition can fire at any time, so negative weights act as conditions/restrictions for a transition to fire.
 
@@ -248,6 +262,7 @@ This implementation uses matrix representation and custom independent algorithms
 
 # TODO
 
+- Prioritized petri net, add priority to transitions
 - Don't make matrix.h visible to end user
 - Make special calls for reading the output, or make up another type of abstraction that don't involves matrix_int_t 
 - Better abstraction for embedding purposes
