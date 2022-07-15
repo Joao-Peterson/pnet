@@ -349,6 +349,14 @@ pnet_t *m_pnet_new(
         outputs_map
     )){
         free(pnet);
+        matrix_delete(neg_arcs_map);
+        matrix_delete(pos_arcs_map);
+        matrix_delete(inhibit_arcs_map);
+        matrix_delete(reset_arcs_map);
+        matrix_delete(places_init);
+        matrix_delete(transitions_delay);
+        matrix_delete(inputs_map);
+        matrix_delete(outputs_map);
         return NULL;
     } 
 
@@ -554,6 +562,8 @@ void pnet_sense(pnet_t *pnet){
 void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
     if(pnet == NULL){
         pnet_set_error(pnet_error_pnet_struct_pointer_passed_as_argument_is_null);
+        matrix_delete(inputs->values);
+        free(inputs);
         return;
     } 
 
@@ -575,6 +585,8 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
         (inputs->values->x != pnet->num_inputs))
     {                
         pnet_set_error(pnet_error_input_matrix_argument_size_doesnt_match_the_input_size_on_the_pnet_provided);
+        matrix_delete(inputs->values);
+        free(inputs);
         return;                                        
     }
 
@@ -585,6 +597,8 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
         pnet->reset_arcs_map == NULL
     ){                 
         pnet_set_error(pnet_info_no_weighted_arcs_nor_reset_arcs_provided_no_token_will_be_moved_or_set);
+        matrix_delete(inputs->values);
+        free(inputs);
         return;
     }
 

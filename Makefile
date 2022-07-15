@@ -82,8 +82,8 @@ dist : $(OBJS_BUILD)
 	cp $(HEADERS) $(DIST_DIR)
 
 
-$(TEST_EXE) : $(OBJS_BUILD) $(TEST_OBJ)
-	$(CC) $^ -o $@
+$(BUILD_DIR)%.exe : $(OBJS_BUILD) %.c
+	$(CC) $(C_FLAGS) $^ -o $@
 
 label : $(README) $(LABEL_FILES)
 	sed -i -r 's/(Created by ).+( - )20[0-9]{2}(\. Version )[0-9]\.[0-9]{1,3}-[0-9]{1,3}(\.)/\1$(AUTHOR)\2$(YEAR)\3$(VERSION)\4/g' $^
@@ -93,7 +93,11 @@ install :
 	cp -r dist/*.a $(INSTALL_LIB_DIR)/
 
 test : 
-	./build/test.exe
+	valgrind -s --leak-check=full $(TEST_EXE)
+# valgrind --tool=callgrind $(TEST_EXE)
+
+app : 
+	$(TEST_APP_EXE)
 
 clear : 
 	rm -f -r $(BUILD_DIR)*

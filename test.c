@@ -638,6 +638,51 @@ int main(int argc, char **argv){
     matrix_delete(places);
     matrix_delete(outputs);
 
+    // printf("                                    #####\n");                                               
+    // printf("                          ---------@# %d #\n", pnet->places->m[0][3]); 
+    // printf("                          |         #####\n");                                           
+    // printf("                          |              \n");                                           
+    // printf("                          |              \n");                                           
+    // printf("#####      |      #####   ---|      #####\n");                                               
+    // printf("# %d #----->|-----># %d #----->|-----># %d #\n", pnet->places->m[0][0], pnet->places->m[0][1], pnet->places->m[0][2]);
+    // printf("#####      |      #####   ---|      #####\n");                                           
+    // printf("  O                       |              \n");                
+    // printf("  |                       |              \n");  
+    // printf("  -------------------------              \n");  
+
+    // pnet = pnet_new(
+    //     pnet_arcs_map_new(2,4,  // arcos de peso negativo
+    //         -1, 0,
+    //          0,-1,
+    //          0, 0,
+    //          0, 0
+    //     ),
+    //     pnet_arcs_map_new(2,4,  // arcos de peso positivo
+    //          0, 0,
+    //          1, 0,
+    //          0, 1,
+    //          0, 0
+    //     ),
+    //     pnet_arcs_map_new(2,4,  // arcos inibidores
+    //          0, 1,
+    //          0, 0,
+    //          0, 0,
+    //          0, 0
+    //     ),
+    //     pnet_arcs_map_new(2,4,  // arcos de reset
+    //          0, 0,
+    //          0, 0,
+    //          0, 0,
+    //          0, 1
+    //     ),
+    //     pnet_places_init_new(4, // valores iniciais dos lugares
+    //         1,0,0,1
+    //     ),
+    //     NULL,
+    //     NULL,
+    //     NULL
+    // );
+
     // #############################################################################
     test_summary();
 
