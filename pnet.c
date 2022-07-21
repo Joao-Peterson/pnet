@@ -523,6 +523,11 @@ void pnet_sense(pnet_t *pnet){
         return;
     } 
 
+    // zero sensibilized transitions
+    for(size_t transition = 0; transition < pnet->num_transitions; transition++){
+        pnet->sensitive_transitions->m[0][transition] = 0;
+    }
+
     for(size_t transition = 0; transition < pnet->num_transitions; transition++){
         pnet->sensitive_transitions->m[0][transition] = 1;                          // set transition to sensibilized
         for(size_t place = 0; place < pnet->num_places; place++){
@@ -709,6 +714,9 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
 
 // print the petri net 
 void pnet_print(pnet_t *pnet){
+    // sense before printing because sensibilized transitions are not updated after the last firing
+    pnet_sense(pnet);                                                               
+
     printf("################# Petri net #################\n");
     matrix_print(pnet->places, "state");
     printf("\n");

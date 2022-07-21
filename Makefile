@@ -92,7 +92,10 @@ install :
 	cp -r dist/*.h $(INSTALL_INC_DIR)/
 	cp -r dist/*.a $(INSTALL_LIB_DIR)/
 
-test : 
+test :
+	$(TEST_EXE) 
+
+mem : 
 	valgrind -s --leak-check=full $(TEST_EXE)
 # valgrind --tool=callgrind $(TEST_EXE)
 

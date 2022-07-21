@@ -638,55 +638,67 @@ int main(int argc, char **argv){
     matrix_delete(places);
     matrix_delete(outputs);
 
-    // printf("                                    #####\n");                                               
-    // printf("                          ---------@# %d #\n", pnet->places->m[0][3]); 
-    // printf("                          |         #####\n");                                           
-    // printf("                          |              \n");                                           
-    // printf("                          |              \n");                                           
-    // printf("#####      |      #####   ---|      #####\n");                                               
-    // printf("# %d #----->|-----># %d #----->|-----># %d #\n", pnet->places->m[0][0], pnet->places->m[0][1], pnet->places->m[0][2]);
-    // printf("#####      |      #####   ---|      #####\n");                                           
-    // printf("  O                       |              \n");                
-    // printf("  |                       |              \n");  
-    // printf("  -------------------------              \n");  
+    // #############################################################################
+    // Test sample petri net 1
+    pnet = pnet_new(
+        pnet_arcs_map_new(3,4,
+            -1, 0, 0,
+             0,-1, 0,
+             0, 0,-1,
+             0, 0, 0
+        ),
+        pnet_arcs_map_new(3,4,
+             0, 0, 1,
+             1, 0, 0,
+             0, 1, 0,
+             0, 0, 0
+        ),
+        pnet_arcs_map_new(3,4,
+             0, 1, 0,
+             0, 0, 0,
+             0, 0, 0,
+             0, 0, 0
+        ),
+        pnet_arcs_map_new(3,4,
+             0, 0, 0,
+             0, 0, 0,
+             0, 0, 0,
+             0, 1, 0
+        ),
+        pnet_places_init_new(4,
+            1,0,0,1
+        ),
+        NULL,
+        NULL,
+        NULL
+    );
 
-    // pnet = pnet_new(
-    //     pnet_arcs_map_new(2,4,  // arcos de peso negativo
-    //         -1, 0,
-    //          0,-1,
-    //          0, 0,
-    //          0, 0
-    //     ),
-    //     pnet_arcs_map_new(2,4,  // arcos de peso positivo
-    //          0, 0,
-    //          1, 0,
-    //          0, 1,
-    //          0, 0
-    //     ),
-    //     pnet_arcs_map_new(2,4,  // arcos inibidores
-    //          0, 1,
-    //          0, 0,
-    //          0, 0,
-    //          0, 0
-    //     ),
-    //     pnet_arcs_map_new(2,4,  // arcos de reset
-    //          0, 0,
-    //          0, 0,
-    //          0, 0,
-    //          0, 1
-    //     ),
-    //     pnet_places_init_new(4, // valores iniciais dos lugares
-    //         1,0,0,1
-    //     ),
-    //     NULL,
-    //     NULL,
-    //     NULL
-    // );
+    places = matrix_new(4,1, 0,1,0,0);
+
+    // tree fires till desired state, fourth one for error detection
+    if(pnet != NULL){
+        pnet_fire(pnet, NULL);
+        pnet_fire(pnet, NULL);
+        pnet_fire(pnet, NULL);
+        pnet_fire(pnet, NULL);
+    }
+
+    test(
+        (pnet != NULL) && 
+        (pnet_get_error() == pnet_info_ok) &&
+        matrix_cmp_eq(pnet->places, places), 
+        "Test sample petri net 1"
+    );
+
+    pnet_delete(pnet);
+    matrix_delete(places);
 
     // #############################################################################
     test_summary();
 
     // test for rush conditions with the timed transitions
+
+
 
     // pnet_t *pnet = pnet_new(5, 4, 1, 2, 3,
     //     places_name_pnet,
