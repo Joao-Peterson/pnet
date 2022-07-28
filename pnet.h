@@ -18,8 +18,18 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <pthread.h>
+#include <string.h>
+#include <errno.h>
+#include <time.h>
 #include "pnet_error.h"
 #include "matrix.h"
+
+// ------------------------------------------------------------ Defines --------------------------------------------------------------
+
+#define CLOCK_TO_MS(x) ((int)(x * 1000 / CLOCKS_PER_SEC))
+
+// ------------------------------------------------------------ Enumerators ----------------------------------------------------------
 
 /**
  * @brief type of events used in the input/transition mapping 
@@ -32,36 +42,50 @@ typedef enum{
     pnet_event_t_max                                                                /**< Enumerator check value, don't use! */
 }pnet_event_t;
 
+// ------------------------------------------------------------ Typedef's ----------------------------------------------------------
+
 /**
- * @brief pnet places list, created by calling pnet_places_new()
+ * @brief typedef for pnet_t struct
+ */
+typedef struct pnet_t pnet_t;
+
+/**
+ * @brief typedef for a callback function signature
+ */
+typedef void (*pnet_callback_t)(pnet_t *pnet);
+
+// ------------------------------------------------------------ Structs ------------------------------------------------------------
+
+/**
+ * @brief pnet places list, created by calling pnet_places_init_new()
  */
 typedef struct{
     matrix_int_t *values;
 }pnet_places_t;
 
 /**
- * @brief pnet transitions list, created by calling pnet_transitions_new()
+ * @brief pnet transitions list, created by calling pnet_transitions_delay_new()
  */
 typedef struct{
     matrix_int_t *values;
 }pnet_transitions_t;
 
 /**
- * @brief pnet arcs map list, created by calling pnet_arcs_new()
+ * @brief pnet arcs map list, created by calling pnet_arcs_map_new()
  */
 typedef struct{
     matrix_int_t *values;
 }pnet_arcs_map_t;
 
 /**
- * @brief pnet inputs map list, created by calling pnet_inputs_new()
+ * @brief pnet inputs map list, created by calling pnet_inputs_map_new()
  */
 typedef struct{
     matrix_int_t *values;
 }pnet_inputs_map_t;
 
 /**
- * @brief pnet outputs map list, created by calling pnet_outputs_new()
+ * @brief pnet outputs map list, created by calling pnet_outputs_map_new()
  */
 typedef struct{
     matrix_int_t *values;
@@ -77,7 +101,7 @@ typedef struct{
 /**
  * @brief struct that represents a petri net
  */
-typedef struct{
+struct pnet_t{
     // size
     size_t num_places;
     size_t num_transitions;
@@ -103,7 +127,14 @@ typedef struct{
 
     // output values
     matrix_int_t *outputs;                                                          /**< The actual output values produced by the petri net */
-}pnet_t;
+
+    // async
+    pnet_callback_t function;                                                       /**< Callback called by the timed thread on state change */
+    pthread_t thread;                                                               /**< Thread used to time timed transitions */
+    matrix_int_t *transition_to_fire;                                               /**< Array used to by the timed thread to fire transitions */
+};
+
+// ------------------------------------------------------------ Functions ------------------------------------------------------------
 
 /**
  * @brief Create a new petri net. All values from the inputs are freed automatically
@@ -112,9 +143,10 @@ typedef struct{
  * @param inhibit_arcs_map: matrix of arcs, where the coluns are the places and the rows are the transitions. Dictates the firing of a transition when a place has zero tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
  * @param reset_arcs_map: matrix of arcs, where the coluns are the places and the rows are the transitions. When a transition occurs it zeroes out the place tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
  * @param places_init: matrix of values, where the columns are the places. The initial values for the places. Values must be a positive value. Must be not null
- * @param transitions_delay: matrix of values, were the columns are the transitions. While a place has enough tokens, the transitions will delay it's firing. Values must be positive, given is micro seconds (us). Can be null
+ * @param transitions_delay: matrix of values, were the columns are the transitions. While a place has enough tokens, the transitions will delay it's firing. Values must be positive, given in milli seconds (ms). Can be null
  * @param inputs_map: matrix where the columns are the transitions and the rows are inputs. Represents the type of event that will fire that transistion, given by the enumerator pnet_event_t. Can be null
  * @param outputs_map: matrix where the columns are the outputs and the rows are places. An output is true when a place has one or more tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
+ * @param function: callback function of type pnet_callback_t that is called after firing operations asynchronously, useful for timed transitions. Can be NULL
  * @return pnet_t struct pointer
  */
 pnet_t *pnet_new(
@@ -125,7 +157,8 @@ pnet_t *pnet_new(
     pnet_places_t *places_init, 
     pnet_transitions_t *transitions_delay,
     pnet_inputs_map_t *inputs_map,
-    pnet_outputs_map_t *outputs_map
+    pnet_outputs_map_t *outputs_map,
+    pnet_callback_t function
 );
 
 /**
@@ -135,9 +168,10 @@ pnet_t *pnet_new(
  * @param inhibit_arcs_map: matrix of arcs, where the coluns are the places and the rows are the transitions. Dictates the firing of a transition when a place has zero tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
  * @param reset_arcs_map: matrix of arcs, where the coluns are the places and the rows are the transitions. When a transition occurs it zeroes out the place tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
  * @param places_init: matrix of values, where the columns are the places. The initial values for the places. Values must be a positive value. Must be not null
- * @param transitions_delay: matrix of values, were the columns are the transitions. While a place has enough tokens, the transitions will delay it's firing. Values must be positive, given is micro seconds (us). Can be null
+ * @param transitions_delay: matrix of values, were the columns are the transitions. While a place has enough tokens, the transitions will delay it's firing. Values must be positive, given in milli seconds (ms). Can be null
  * @param inputs_map: matrix where the columns are the transitions and the rows are inputs. Represents the type of event that will fire that transistion, given by the enumerator pnet_event_t. Can be null
  * @param outputs_map: matrix where the columns are the outputs and the rows are places. An output is true when a place has one or more tokens. Values must be 0 or 1, any non zero number counts as 1. Can be null
+ * @param function: callback function of type pnet_callback_t that is called after firing operations asynchronously, useful for timed transitions. Can be NULL
  * @return pnet_t struct pointer
  */
 pnet_t *m_pnet_new(
@@ -148,7 +182,8 @@ pnet_t *m_pnet_new(
     matrix_int_t *places_init, 
     matrix_int_t *transitions_delay,
     matrix_int_t *inputs_map,
-    matrix_int_t *outputs_map
+    matrix_int_t *outputs_map,
+    pnet_callback_t function
 );
 
 /**

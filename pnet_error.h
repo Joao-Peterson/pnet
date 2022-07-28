@@ -24,6 +24,7 @@ typedef enum{
     pnet_info_no_neg_arcs_nor_inhibit_arcs_provided_no_transition_will_be_sensibilized,
     pnet_info_no_weighted_arcs_nor_reset_arcs_provided_no_token_will_be_moved_or_set,
     pnet_info_inputs_were_passed_but_no_input_map_was_set_when_the_petri_net_was_created,
+    pnet_info_no_callback_function_was_passed_while_using_timed_transitions_watch_out,
     pnet_error_no_arcs_were_given,                                    
     pnet_error_place_init_must_have_only_one_row,                                    
     pnet_error_transitions_delay_must_have_only_one_row,               
@@ -41,6 +42,7 @@ typedef enum{
     pnet_error_outputs_has_different_number_of_places_in_its_first_columns_than_in_the_arcs,
     pnet_error_pnet_struct_pointer_passed_as_argument_is_null,
     pnet_error_input_matrix_argument_size_doesnt_match_the_input_size_on_the_pnet_provided,
+    pnet_error_thread_could_not_be_created,
 }pnet_error_t;
 
 /**

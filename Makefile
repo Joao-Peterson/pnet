@@ -15,7 +15,7 @@ C_FLAGS :=
 
 I_FLAGS :=
 
-L_FLAGS :=
+L_FLAGS := -lpthread
 
 TEST_SOURCE := test.c
 

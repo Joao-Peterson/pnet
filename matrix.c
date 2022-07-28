@@ -279,3 +279,10 @@ bool matrix_cmp_eq(matrix_int_t *a, matrix_int_t *b){
     return res;
 }
 
+void matrix_set(matrix_int_t *m, int number){
+    for(size_t i = 0; i < m->y; i++){
+        for(size_t j = 0; j < m->x; j++){
+            m->m[i][j] = number;
+        }
+    }
+}

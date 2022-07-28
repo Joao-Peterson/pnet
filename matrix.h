@@ -80,4 +80,6 @@ matrix_int_t *matrix_transpose(matrix_int_t *matrix);
 
 bool matrix_cmp_eq(matrix_int_t *a, matrix_int_t *b);
 
+void matrix_set(matrix_int_t *m, int number);
+
 #endif

@@ -14,4 +14,11 @@
  */
 void pnet_set_error(pnet_error_t code);
 
+/**
+ * @brief set custom error message. !Avoid using
+ * @param format: string format
+ * @param ...: arguments
+ */
+void pnet_set_error_msg(char* format, ...);
+
 #endif

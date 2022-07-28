@@ -6,6 +6,8 @@
 #include <pthread.h>
 #include "pnet.h"
 
+
+
 // global test count
 size_t test_counter = 1;
 
@@ -21,6 +23,13 @@ void test_summary(void);
 // takes a condition to test, if true passes if false fails. COUNTER increments with every call
 #define test(condition, text) test_call(condition, text, __FILE__, __LINE__, __COUNTER__);
 
+// callback and global flag
+void cb(pnet_t *pnet);
+bool cb_flag = false;
+
+
+
+// Main #############################################################################
 int main(int argc, char **argv){
 
     // #############################################################################
@@ -39,6 +48,7 @@ int main(int argc, char **argv){
         pnet_places_init_new(2,
             1, 0
         ),
+        NULL,
         NULL,
         NULL,
         NULL
@@ -83,7 +93,8 @@ int main(int argc, char **argv){
             1,0,0,
             0,1,0,
             0,0,1
-        )
+        ),
+        cb
     );
     test((pnet != NULL) && (pnet_get_error() == pnet_info_ok), "Test for creation with all arguments");
     pnet_delete(pnet);
@@ -104,6 +115,7 @@ int main(int argc, char **argv){
         NULL,
         NULL,
         NULL,
+        NULL,
         NULL
     );
     test((pnet == NULL) && (pnet_get_error() == pnet_error_places_init_must_not_be_null), "Test for all null args");
@@ -117,6 +129,7 @@ int main(int argc, char **argv){
         NULL,
         NULL,
         pnet_places_init_new(5, 1,0,0,0,0),
+        NULL,
         NULL,
         NULL,
         NULL
@@ -161,7 +174,8 @@ int main(int argc, char **argv){
             -11,0,0,
             0,14,0,
             0,0,1
-        )
+        ),
+        cb
     );
 
     matrix_int_t *inhibit_arcs_map = matrix_new(2,3, 1,1, 0,1, 0,0);
@@ -216,7 +230,8 @@ int main(int argc, char **argv){
             1,0,0,
             0,1,0,
             0,0,1
-        )
+        ),
+        NULL
     );
 
     if(pnet != NULL){
@@ -255,7 +270,8 @@ int main(int argc, char **argv){
             1,0,0,
             0,1,0,
             0,0,1
-        )
+        ),
+        NULL
     );
 
     test(
@@ -302,7 +318,8 @@ int main(int argc, char **argv){
             1,0,0,
             0,1,0,
             0,0,1
-        )
+        ),
+        cb
     );
 
     if(pnet != NULL){
@@ -346,7 +363,8 @@ int main(int argc, char **argv){
             1,0,0,
             0,1,0,
             0,0,1
-        )
+        ),
+        NULL
     );
 
     if(pnet != NULL){
@@ -387,7 +405,8 @@ int main(int argc, char **argv){
             1,0,0,
             0,1,0,
             0,0,1
-        )
+        ),
+        NULL
     );
 
     pnet_fire(pnet, pnet_inputs_new(2,0,0));
@@ -427,7 +446,8 @@ int main(int argc, char **argv){
             1,0,0,
             0,1,0,
             0,0,1
-        )
+        ),
+        NULL
     );
 
     pnet_fire(pnet, NULL);
@@ -466,9 +486,7 @@ int main(int argc, char **argv){
         pnet_places_init_new(3,
             1, 0, 0
         ),
-        pnet_transitions_delay_new(2,
-            0, 0
-        ),
+        NULL,
         pnet_inputs_map_new(2,2,
             pnet_event_none, pnet_event_pos_edge,
             pnet_event_none, pnet_event_none
@@ -477,10 +495,11 @@ int main(int argc, char **argv){
             1,0,0,
             0,1,0,
             0,0,1
-        )
+        ),
+        cb
     );
 
-    // Test firing of transition with no input map
+    // Test firing of a single transition with input event of type none
     pnet_fire(pnet, pnet_inputs_new(2, 0,0));
     // matrix_print(pnet->places,"places");
     matrix_int_t *places = matrix_new(3,1, 0,1,0);
@@ -489,7 +508,7 @@ int main(int argc, char **argv){
         (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
         (matrix_cmp_eq(pnet->places, places)),
-        "Test firing of transition with no input map"
+        "Test firing of a single transition with input event of type none"
     );
 
     matrix_delete(places);
@@ -540,6 +559,7 @@ int main(int argc, char **argv){
         pnet_places_init_new(2,
             1, 0
         ),
+        NULL,
         NULL,
         NULL,
         NULL
@@ -599,7 +619,8 @@ int main(int argc, char **argv){
             1,0,0,
             0,1,0,
             0,0,1 
-        )
+        ),
+        NULL
     );
 
     places = matrix_new(5,1, 0,0,1,0,1);
@@ -639,6 +660,81 @@ int main(int argc, char **argv){
     matrix_delete(outputs);
 
     // #############################################################################
+    // Test timed petri net without passing callback as argument
+
+    pnet = pnet_new(
+        pnet_arcs_map_new(1,2,
+            -1,
+             0
+        ),
+        pnet_arcs_map_new(1,2,
+             0,
+             1
+        ),
+        NULL,
+        NULL,
+        pnet_places_init_new(2,
+            1, 0
+        ),
+        pnet_transitions_delay_new(1,
+            500000
+        ),
+        NULL,
+        NULL,
+        NULL
+    );
+
+    test(
+        (pnet != NULL) && 
+        (pnet_get_error() == pnet_info_no_callback_function_was_passed_while_using_timed_transitions_watch_out), 
+        "Test timed petri net without passing callback as argument"
+    );
+
+    pnet_delete(pnet);
+
+    // #############################################################################
+    // Test timed transition
+
+    pnet = pnet_new(
+        pnet_arcs_map_new(1,2,
+            -1,
+             0
+        ),
+        pnet_arcs_map_new(1,2,
+             0,
+             1
+        ),
+        NULL,
+        NULL,
+        pnet_places_init_new(2,
+            1, 0
+        ),
+        pnet_transitions_delay_new(1,
+            500
+        ),
+        NULL,
+        NULL,
+        cb
+    );
+
+    cb_flag = false;
+    clock_t now, start;
+
+    pnet_fire(pnet, NULL);
+    start = clock();
+
+    while(cb_flag == false){
+        now = clock();
+    }
+
+    int elapsed_time = CLOCK_TO_MS(now - start);
+    printf("elapsed_time: %d\n", elapsed_time);
+
+    test(abs(elapsed_time - 500) < 5, "Test elapsed time of timed transition");
+
+    pnet_delete(pnet);
+    
+    // #############################################################################
     // Test sample petri net 1
     pnet = pnet_new(
         pnet_arcs_map_new(3,4,
@@ -670,6 +766,7 @@ int main(int argc, char **argv){
         ),
         NULL,
         NULL,
+        NULL,
         NULL
     );
 
@@ -677,7 +774,6 @@ int main(int argc, char **argv){
 
     // tree fires till desired state, fourth one for error detection
     if(pnet != NULL){
-        pnet_fire(pnet, NULL);
         pnet_fire(pnet, NULL);
         pnet_fire(pnet, NULL);
         pnet_fire(pnet, NULL);
@@ -695,10 +791,18 @@ int main(int argc, char **argv){
     matrix_delete(places);
 
     // #############################################################################
+    // Test sample petri net 2
+
+
+    // #############################################################################
     test_summary();
 
     // test for rush conditions with the timed transitions
     return 0;
+}
+
+void cb(pnet_t *pnet){
+    cb_flag = true;
 }
 
 void make_bar(double value, double max, char *array, size_t size, char chr){
@@ -724,7 +828,7 @@ void test_call(bool condition, char *text, char *file, int line, int dummy){
         printf("[TEST: %3d / %d] [%s] [%s:%-4d] [PASSED]: %s\n", test_counter, total, bar, file, line, text);
     }
     else{
-        printf("[TEST: %3d / %d] [%s] [%s:%-4d] [FAILED] [PNET_ERR: %s]: %s\n", test_counter, total, bar, file, line, pnet_get_error_msg(), text);
+        printf("[TEST: %3d / %d] [%s] [%s:%-4d] [FAILED]: [PNET_ERR: %s] %s\n", test_counter, total, bar, file, line, pnet_get_error_msg(), text);
         fail_counter++;
     }
 

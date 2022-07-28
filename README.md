@@ -267,6 +267,9 @@ This implementation uses matrix representation and custom independent algorithms
 - Make special calls for reading the output, or make up another type of abstraction that don't involves matrix_int_t 
 - Better abstraction for embedding purposes
 - Analysis tools
+- Timed implementation for embedded systems
+- Custom memory allocator option
+- Compile macro for minimal build, used for excluding some logic checking and abstraction so the library could be compiled for minimal space keeping in mind embedded systems
 - PNML support
 - Timed calls
 - Valgrind test
