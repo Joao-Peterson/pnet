@@ -717,20 +717,18 @@ int main(int argc, char **argv){
         cb
     );
 
-    cb_flag = false;
     clock_t now, start;
 
     pnet_fire(pnet, NULL);
-    start = clock();
 
+    start = clock();
+    cb_flag = false;
     while(cb_flag == false){
         now = clock();
     }
 
     int elapsed_time = CLOCK_TO_MS(now - start);
-    printf("elapsed_time: %d\n", elapsed_time);
-
-    test(abs(elapsed_time - 500) < 5, "Test elapsed time of timed transition");
+    test(abs(elapsed_time - 500) < 10, "Test elapsed time of timed transition with a +-10 ms margin");
 
     pnet_delete(pnet);
     

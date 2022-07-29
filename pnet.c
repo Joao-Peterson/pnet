@@ -106,28 +106,32 @@ static void *timed_thread_main(void *arg){
 
         if(pnet->transitions_delay != NULL){
             for(size_t transition = 0; transition < pnet->num_transitions; transition++){
-                // timed transitions
-                if(pnet->transitions_delay->m[0][transition] != 0){
-                    // start counting
-                    if(pnet->transition_to_fire->m[0][transition] == 1 && time[transition] == 0){
-                        time[transition] = clock();
-                        pnet->transition_to_fire->m[0][transition] = 0;
-                    }
-                    // count
-                    else{
-                        clock_t now = clock();
-                        // after elapsed time 
-                        if( (CLOCK_TO_MS(now - time[transition])) >= pnet->transitions_delay->m[0][transition] ){
-                            time[transition] = 0;
-                            
-                            // re check sensibility
-                            pnet_sense(pnet);
-                            if(pnet->sensitive_transitions->m[0][transition] == 1){
-                                // move tokens
-                                pnet_move(pnet);
-                                // call callback
-                                if(pnet->function != NULL) pnet->function(pnet);
-                            }
+                // only on timed transitions
+                if(pnet->transitions_delay->m[0][transition] == 0)
+                    continue;
+
+                // start counting
+                if(pnet->transition_to_fire->m[0][transition] == 1 && time[transition] == 0){
+                    time[transition] = clock();
+                    pnet->transition_to_fire->m[0][transition] = 0;
+                    continue;
+                }
+
+                // count
+                if(time[transition] > 0){
+                    clock_t now = clock();
+                    // after elapsed time 
+                    if( (CLOCK_TO_MS(now - time[transition])) >= pnet->transitions_delay->m[0][transition] ){
+                        
+                        time[transition] = 0;
+
+                        // re check sensibility
+                        pnet_sense(pnet);
+                        if(pnet->sensitive_transitions->m[0][transition] == 1){
+                            // move tokens
+                            pnet_move(pnet);
+                            // call callback
+                            if(pnet->function != NULL) pnet->function(pnet);
                         }
                     }
                 }
