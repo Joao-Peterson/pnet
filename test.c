@@ -6,7 +6,10 @@
 #include <pthread.h>
 #include "pnet.h"
 
-
+// time precision for testing
+#define TIME_PRECISION_MS (10)
+#define TIME_TEST_DELAY_MS (1)
+#define TIME_TEST_LOOP_MAX (3000)
 
 // global test count
 size_t test_counter = 1;
@@ -21,7 +24,7 @@ void test_call(bool condition, char* text, char *file, int line, int dummy);
 void test_summary(void);
 
 // takes a condition to test, if true passes if false fails. COUNTER increments with every call
-#define test(condition, text) test_call(condition, text, __FILE__, __LINE__, __COUNTER__);
+#define test(condition, text) test_call((condition), text, __FILE__, __LINE__, __COUNTER__);
 
 // callback and global flag
 void cb(pnet_t *pnet);
@@ -710,7 +713,7 @@ int main(int argc, char **argv){
             1, 0
         ),
         pnet_transitions_delay_new(1,
-            500
+            TIME_TEST_DELAY_MS
         ),
         NULL,
         NULL,
@@ -718,18 +721,40 @@ int main(int argc, char **argv){
     );
 
     clock_t now, start;
+    bool precision = true;
+    int last_elapsed = 0;
 
-    pnet_fire(pnet, NULL);
+    // approximately one second of tests
+    for(size_t i = 0; i < TIME_TEST_LOOP_MAX; i++){
+        // start clock
+        start = clock();
+        cb_flag = false;
+        
+        // fire
+        pnet_fire(pnet, NULL);
 
-    start = clock();
-    cb_flag = false;
-    while(cb_flag == false){
-        now = clock();
+        // wait
+        while(cb_flag == false){
+            now = clock();
+        }
+
+        // elapsed
+        int elapsed_time = CLOCK_TO_MS(now - start);
+        last_elapsed = elapsed_time;
+
+        // test
+        if(abs(elapsed_time - TIME_TEST_DELAY_MS) > TIME_PRECISION_MS){
+            precision = false;
+            break;
+        }
     }
 
-    int elapsed_time = CLOCK_TO_MS(now - start);
-    test(abs(elapsed_time - 500) < 10, "Test elapsed time of timed transition with a +-10 ms margin");
+    char *msg = calloc(500+1, sizeof(char));
+    snprintf(msg, 500, "Test of timed transition with delay: [%d ms], precision: [+-%d ms] and iterations: [%d]. Last elapsed time: [%d ms]", TIME_TEST_DELAY_MS, TIME_PRECISION_MS, TIME_TEST_LOOP_MAX, last_elapsed);
+    
+    test(precision, msg);
 
+    free(msg);
     pnet_delete(pnet);
     
     // #############################################################################
