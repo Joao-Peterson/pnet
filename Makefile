@@ -6,8 +6,10 @@
 # 	clear 		: clear compiled executables
 # 	clearall 	: clear compiled objects and lib files in 'build/' and 'dist/' folders as well as executables
 # 	install  	: installs binaries, includes and libs to the specified "INSTALL_" path variables
-# 	test  		: runs the test binary 
 # 	label  		: update the author, year and version using sed in the specified files 
+# 	test  		: runs the test binary 
+# 	mem  		: runs valgrind on the test binary 
+# 	doc  		: runs doxygen and generate output on /docs folder 
 
 CC := gcc
 
@@ -20,12 +22,12 @@ L_FLAGS := -lpthread
 TEST_SOURCE := test.c
 
 SOURCES :=
-SOURCES += matrix.c
+SOURCES += pnet_matrix.c
 SOURCES += pnet.c
 SOURCES += pnet_error.c
 
 HEADERS :=
-HEADERS += matrix.h
+HEADERS += pnet_matrix.h
 HEADERS += pnet_error.h
 HEADERS += pnet.h
 
@@ -33,6 +35,7 @@ LIB_NAME := libpnet.a
 
 DIST_DIR := dist/
 BUILD_DIR := build/
+DOC_DIR := docs/
 
 ARCHIVER := ar -rcs
 
@@ -44,8 +47,10 @@ INSTALL_INC_DIR := /usr/local/include
 
 README = README.md
 LABEL_FILES = $(shell ls *.h)
+LABEL_FILES += $(DOC_DIR)Doxyfile
 AUTHOR = João Peterson Scheffer
 YEAR = 2022
+#VERSION = 0.000-000
 VERSION = 1.0-0
 
 # ---------------------------------------------------------------
@@ -69,7 +74,7 @@ build : $(OBJS_BUILD)
 
 release : C_FLAGS += -O2
 release : $(HEADERS)
-release : clear $(OBJS_BUILD) label dist
+release : clear $(OBJS_BUILD) label doc dist
 
 $(BUILD_DIR)%.o : %.c
 	@mkdir -p $(dir $@)
@@ -86,7 +91,10 @@ $(BUILD_DIR)%.exe : $(OBJS_BUILD) %.c
 	$(CC) $(C_FLAGS) $^ -o $@
 
 label : $(README) $(LABEL_FILES)
+# match and print
+# sed -r -n '/(Created by ).+( - )20[0-9]{2}(\. Version )[0-9]\.[0-9]{1,3}-[0-9]{1,3}(\.)/p' $^
 	sed -i -r 's/(Created by ).+( - )20[0-9]{2}(\. Version )[0-9]\.[0-9]{1,3}-[0-9]{1,3}(\.)/\1$(AUTHOR)\2$(YEAR)\3$(VERSION)\4/g' $^
+	sed -i -r 's/(PROJECT_NUMBER\s+= )[0-9]\.[0-9]{1,3}-[0-9]{1,3}/\1$(VERSION)/g' $^
 
 install :
 	cp -r dist/*.h $(INSTALL_INC_DIR)/
@@ -98,6 +106,9 @@ test :
 mem : 
 	valgrind -s --leak-check=full $(TEST_EXE)
 # valgrind --tool=callgrind $(TEST_EXE)
+
+doc : label
+	doxygen -q $(DOC_DIR)Doxyfile
 
 app : 
 	$(TEST_APP_EXE)

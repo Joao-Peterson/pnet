@@ -18,7 +18,9 @@ Licensed under the MIT License. Please reefer to the LICENSE file in the project
     - [Inhibit arcs](#inhibit-arcs)
     - [Reset arcs](#reset-arcs)
     - [Input events](#input-events)
+    - [Delay](#delay)
     - [Outputs](#outputs)
+    - [Callback](#callback)
   - [Error handling](#error-handling)
 - [Compile and install](#compile-and-install)
 - [Implementation details](#implementation-details)
@@ -70,7 +72,9 @@ pnet_t *pnet = pnet_new(
         1,0,0,
         0,1,0,
         0,0,1
-    )
+    ),
+    NULL,
+    NULL
 ); 
 ```
 
@@ -93,6 +97,8 @@ pnet_t *pnet = pnet_new(
     ),
     NULL,
     NULL,
+    NULL,
+    NULL,
     NULL
 );
 ```
@@ -103,7 +109,7 @@ To execute your petri net just call `pnet_fire`:
 pnet_fire(pnet, pnet_inputs_new(2, 1,0))
 ```
 
-This will execute one transition at a time, so the execution is made in stepped manner.
+This will execute **one and only transition** at a time, so the execution is made in stepped manner.
 
 ## Arguments
 
@@ -196,6 +202,19 @@ pnet_fire(pnet, pnet_inputs_new(2, 1,0))
 pnet_fire(pnet, NULL)
 ```
 
+### Delay
+
+You can add delay to transitions by mapping the value in milliseconds to every transition, a 0 represents a instant transition. Given in matrix form, one row and the columns are the transitions.
+
+```c
+// 500 ms delay on transition 0
+pnet_transitions_delay_new(2,
+    500, 0                                                      
+),
+```
+
+Note that when using instant transitions, after the `pnet_fire()` call, the tokens would have moved already, but when using a delay you can only expect the net state after the define time, so to react accordingly you have to provide a callback, see section [Callback](#callback). When a callback is given it will be called after a delayed transition is fired.
+
 ### Outputs
 
 Outputs are given in matrix form, values can be only 1 and 0.
@@ -215,6 +234,22 @@ The state of the outputs can be accessed reading the `outputs` member of the `pn
 ```c
 pnet->outputs
 ```
+
+### Callback
+
+A callback of type `pnet_callback_t` must be provided as argument when using timed transitions. **It will** be called after the execution of the delay for a given transition and that transition is still sensible. **It will not be called** when a instant transition was fired.
+
+It's form is as follows:
+
+```c
+void cb(pnet_t *pnet, void *data){
+    your_data_struct *my_data = (your_data_struct*)data;
+    
+    // you code here
+}
+```
+
+You can access the pnet directly through the callback as well a user data passed in the `data` parameter on the `pnet_new()` and `m_pnet_new()` calls.
 
 ## Error handling
 
@@ -263,15 +298,13 @@ This implementation uses matrix representation and custom independent algorithms
 # TODO
 
 - Prioritized petri net, add priority to transitions
-- Don't make matrix.h visible to end user
 - Make special calls for reading the output, or make up another type of abstraction that don't involves matrix_int_t 
-- Better abstraction for embedding purposes
+- Callback for output change
 - Analysis tools
-- Timed implementation for embedded systems
-- Custom memory allocator option
-- Compile macro for minimal build, used for excluding some logic checking and abstraction so the library could be compiled for minimal space keeping in mind embedded systems
 - PNML support
-- Timed calls
-- Valgrind test
 - Doxygen doc page
 - Badges on readme
+- Better abstraction for embedding purposes
+- Timed implementation for embedded systems, custom timers
+- Custom memory allocator option
+- Compile macro for minimal build, used for excluding some logic checking and abstraction so the library could be compiled for minimal space keeping in mind embedded systems

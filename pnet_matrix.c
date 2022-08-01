@@ -1,55 +1,55 @@
-#include "matrix.h"
+#include "pnet_matrix.h"
 
-matrix_string_t *v_matrix_string_new(size_t x, size_t y, va_list *args){
-    if(x == 0 || y == 0) return NULL;
+// matrix_string_t *v_matrix_string_new(size_t x, size_t y, va_list *args){
+//     if(x == 0 || y == 0) return NULL;
     
-    matrix_string_t *matrix = (matrix_string_t*)calloc(1, sizeof(matrix_string_t));
-    matrix->x = x;
-    matrix->y = y;
-    matrix->m = (char***)calloc(y, sizeof(char**));
+//     matrix_string_t *matrix = (matrix_string_t*)calloc(1, sizeof(matrix_string_t));
+//     matrix->x = x;
+//     matrix->y = y;
+//     matrix->m = (char***)calloc(y, sizeof(char**));
 
-    for(size_t i = 0; i < y; i++){
-        matrix->m[i] = (char**)calloc(x, sizeof(char*));
-        for(size_t j = 0; j < x; j++){
-            matrix->m[i][j] = va_arg(*args, char*); 
-        }
-    }
+//     for(size_t i = 0; i < y; i++){
+//         matrix->m[i] = (char**)calloc(x, sizeof(char*));
+//         for(size_t j = 0; j < x; j++){
+//             matrix->m[i][j] = va_arg(*args, char*); 
+//         }
+//     }
 
-    return matrix;
-}
+//     return matrix;
+// }
 
-matrix_string_t *matrix_string_new(size_t x, size_t y, ...){
-    va_list args;
-    va_start(args, y);
+// matrix_string_t *matrix_string_new(size_t x, size_t y, ...){
+//     va_list args;
+//     va_start(args, y);
 
-    matrix_string_t *matrix = v_matrix_string_new(x, y, &args);
+//     matrix_string_t *matrix = v_matrix_string_new(x, y, &args);
 
-    va_end(args);
+//     va_end(args);
 
-    return matrix;
-}
+//     return matrix;
+// }
 
-void matrix_string_delete(matrix_string_t *matrix){
-    for(size_t i = 0; i < matrix->y; i++)
-        free(matrix->m[i]);
+// void matrix_string_delete(matrix_string_t *matrix){
+//     for(size_t i = 0; i < matrix->y; i++)
+//         free(matrix->m[i]);
 
-    free(matrix->m);
-    free(matrix);    
-}
+//     free(matrix->m);
+//     free(matrix);    
+// }
 
-void matrix_string_print(matrix_string_t *matrix, char *name){
-    printf("\"%s\" =\n", name);
-    for(size_t i = 0; i < matrix->y; i++){
-        printf("[");
-        for(size_t j = 0; j < matrix->x; j++){
-            printf(" \"%s\"", matrix->m[i][j]);        
-        }
-        printf(" ]\n");
-    }
-}
+// void matrix_string_print(matrix_string_t *matrix, char *name){
+//     printf("\"%s\" =\n", name);
+//     for(size_t i = 0; i < matrix->y; i++){
+//         printf("[");
+//         for(size_t j = 0; j < matrix->x; j++){
+//             printf(" \"%s\"", matrix->m[i][j]);        
+//         }
+//         printf(" ]\n");
+//     }
+// }
 
-matrix_int_t *v_matrix_new(size_t x, size_t y, va_list *args){
-    matrix_int_t *matrix = (matrix_int_t*)calloc(1, sizeof(matrix_int_t));
+pnet_matrix_t *v_pnet_matrix_new(size_t x, size_t y, va_list *args){
+    pnet_matrix_t *matrix = (pnet_matrix_t*)calloc(1, sizeof(pnet_matrix_t));
     matrix->x = x;
     matrix->y = y;
     matrix->m = (int**)calloc(y, sizeof(int*));
@@ -64,19 +64,19 @@ matrix_int_t *v_matrix_new(size_t x, size_t y, va_list *args){
     return matrix;
 }
 
-matrix_int_t *matrix_new(size_t x, size_t y, ...){
+pnet_matrix_t *pnet_matrix_new(size_t x, size_t y, ...){
     va_list args;
     va_start(args, y);
 
-    matrix_int_t *matrix = v_matrix_new(x, y, &args);
+    pnet_matrix_t *matrix = v_pnet_matrix_new(x, y, &args);
 
     va_end(args);
 
     return matrix;
 }
 
-matrix_int_t *matrix_new_zero(size_t x, size_t y){
-    matrix_int_t *matrix = (matrix_int_t*)calloc(1, sizeof(matrix_int_t));
+pnet_matrix_t *pnet_matrix_new_zero(size_t x, size_t y){
+    pnet_matrix_t *matrix = (pnet_matrix_t*)calloc(1, sizeof(pnet_matrix_t));
     matrix->x = x;
     matrix->y = y;
     matrix->m = (int**)calloc(y, sizeof(int*));
@@ -91,7 +91,7 @@ matrix_int_t *matrix_new_zero(size_t x, size_t y){
     return matrix;
 }
 
-void matrix_delete(matrix_int_t *matrix){
+void pnet_matrix_delete(pnet_matrix_t *matrix){
     if(matrix == NULL) return;
     
     for(size_t i = 0; i < matrix->y; i++)
@@ -101,7 +101,7 @@ void matrix_delete(matrix_int_t *matrix){
     free(matrix);
 }
 
-void matrix_print(matrix_int_t *matrix, char *name){
+void pnet_matrix_print(pnet_matrix_t *matrix, char *name){
     printf("\"%s\" =\n", name);
     for(size_t i = 0; i < matrix->y; i++){
         printf("[");
@@ -112,11 +112,11 @@ void matrix_print(matrix_int_t *matrix, char *name){
     }
 }
 
-matrix_int_t *matrix_mul(matrix_int_t *a, matrix_int_t *b){
+pnet_matrix_t *pnet_matrix_mul(pnet_matrix_t *a, pnet_matrix_t *b){
     if(a->x != b->y)
         return NULL;
 
-    matrix_int_t *m = (matrix_int_t*)calloc(1, sizeof(matrix_int_t));
+    pnet_matrix_t *m = (pnet_matrix_t*)calloc(1, sizeof(pnet_matrix_t));
     m->x = b->x;
     m->y = a->y;
     m->m = (int**)calloc(m->y, sizeof(int*));
@@ -137,10 +137,10 @@ matrix_int_t *matrix_mul(matrix_int_t *a, matrix_int_t *b){
     return m;
 }
 
-matrix_int_t *matrix_mul_by_element(matrix_int_t *a, matrix_int_t *b){
+pnet_matrix_t *pnet_matrix_mul_by_element(pnet_matrix_t *a, pnet_matrix_t *b){
     if(a->x != b->x || a->y != b->y) return NULL;
 
-    matrix_int_t *m = (matrix_int_t*)calloc(1, sizeof(matrix_int_t));
+    pnet_matrix_t *m = (pnet_matrix_t*)calloc(1, sizeof(pnet_matrix_t));
     m->x = a->x;
     m->y = a->y;
     m->m = (int**)calloc(m->y, sizeof(int*));
@@ -155,8 +155,8 @@ matrix_int_t *matrix_mul_by_element(matrix_int_t *a, matrix_int_t *b){
     return m;
 }
 
-matrix_int_t *matrix_mul_scalar(matrix_int_t *a, int c){
-    matrix_int_t *m = (matrix_int_t*)calloc(1, sizeof(matrix_int_t));
+pnet_matrix_t *pnet_matrix_mul_scalar(pnet_matrix_t *a, int c){
+    pnet_matrix_t *m = (pnet_matrix_t*)calloc(1, sizeof(pnet_matrix_t));
     m->x = a->x;
     m->y = a->y;
     m->m = (int**)calloc(m->y, sizeof(int*));
@@ -171,10 +171,10 @@ matrix_int_t *matrix_mul_scalar(matrix_int_t *a, int c){
     return m;
 }
 
-matrix_int_t *matrix_add(matrix_int_t *a, matrix_int_t *b){
+pnet_matrix_t *pnet_matrix_add(pnet_matrix_t *a, pnet_matrix_t *b){
     if(a->x != b->x || a->y != b->y) return NULL;
 
-    matrix_int_t *m = (matrix_int_t*)calloc(1, sizeof(matrix_int_t));
+    pnet_matrix_t *m = (pnet_matrix_t*)calloc(1, sizeof(pnet_matrix_t));
     m->x = a->x;
     m->y = a->y;
     m->m = (int**)calloc(m->y, sizeof(int*));
@@ -189,10 +189,10 @@ matrix_int_t *matrix_add(matrix_int_t *a, matrix_int_t *b){
     return m;
 }
 
-matrix_int_t *matrix_and(matrix_int_t *a, matrix_int_t *b){
+pnet_matrix_t *pnet_matrix_and(pnet_matrix_t *a, pnet_matrix_t *b){
     if(a->x != b->x || a->y != b->y) return NULL;
 
-    matrix_int_t *m = (matrix_int_t*)calloc(1, sizeof(matrix_int_t));
+    pnet_matrix_t *m = (pnet_matrix_t*)calloc(1, sizeof(pnet_matrix_t));
     m->x = a->x;
     m->y = a->y;
     m->m = (int**)calloc(m->y, sizeof(int*));
@@ -207,8 +207,8 @@ matrix_int_t *matrix_and(matrix_int_t *a, matrix_int_t *b){
     return m;
 }
 
-matrix_int_t *matrix_neg(matrix_int_t *a){
-    matrix_int_t *m = (matrix_int_t*)calloc(1, sizeof(matrix_int_t));
+pnet_matrix_t *pnet_matrix_neg(pnet_matrix_t *a){
+    pnet_matrix_t *m = (pnet_matrix_t*)calloc(1, sizeof(pnet_matrix_t));
     m->x = a->x;
     m->y = a->y;
     m->m = (int**)calloc(m->y, sizeof(int*));
@@ -223,8 +223,8 @@ matrix_int_t *matrix_neg(matrix_int_t *a){
     return m;
 }
 
-matrix_int_t *matrix_duplicate(matrix_int_t *a){
-    matrix_int_t *m = (matrix_int_t*)calloc(1, sizeof(matrix_int_t));
+pnet_matrix_t *pnet_matrix_duplicate(pnet_matrix_t *a){
+    pnet_matrix_t *m = (pnet_matrix_t*)calloc(1, sizeof(pnet_matrix_t));
     m->x = a->x;
     m->y = a->y;
     m->m = (int**)calloc(m->y, sizeof(int*));
@@ -239,7 +239,7 @@ matrix_int_t *matrix_duplicate(matrix_int_t *a){
     return m;
 }
 
-void matrix_copy(matrix_int_t *dest, matrix_int_t *src){
+void pnet_matrix_copy(pnet_matrix_t *dest, pnet_matrix_t *src){
     if(dest->x != src->x || dest->y != src->y) return;
     
     for (size_t i = 0; i < dest->y; i++){
@@ -249,8 +249,8 @@ void matrix_copy(matrix_int_t *dest, matrix_int_t *src){
     }
 }
 
-matrix_int_t *matrix_transpose(matrix_int_t *matrix){
-    matrix_int_t *m = (matrix_int_t*)calloc(1, sizeof(matrix_int_t));
+pnet_matrix_t *pnet_matrix_transpose(pnet_matrix_t *matrix){
+    pnet_matrix_t *m = (pnet_matrix_t*)calloc(1, sizeof(pnet_matrix_t));
     m->x = matrix->y;
     m->y = matrix->x;
     m->m = (int**)calloc(m->y, sizeof(int*));
@@ -265,7 +265,7 @@ matrix_int_t *matrix_transpose(matrix_int_t *matrix){
     return m;
 }
 
-bool matrix_cmp_eq(matrix_int_t *a, matrix_int_t *b){
+bool pnet_matrix_cmp_eq(pnet_matrix_t *a, pnet_matrix_t *b){
     if(a->x != b->x || a->y != b->y) return false;
     bool res = true;
 
@@ -279,7 +279,7 @@ bool matrix_cmp_eq(matrix_int_t *a, matrix_int_t *b){
     return res;
 }
 
-void matrix_set(matrix_int_t *m, int number){
+void pnet_matrix_set(pnet_matrix_t *m, int number){
     for(size_t i = 0; i < m->y; i++){
         for(size_t j = 0; j < m->x; j++){
             m->m[i][j] = number;

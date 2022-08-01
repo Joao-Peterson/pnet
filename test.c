@@ -27,7 +27,7 @@ void test_summary(void);
 #define test(condition, text) test_call((condition), text, __FILE__, __LINE__, __COUNTER__);
 
 // callback and global flag
-void cb(pnet_t *pnet);
+void cb(pnet_t *pnet, void *data);
 bool cb_flag = false;
 
 
@@ -51,6 +51,7 @@ int main(int argc, char **argv){
         pnet_places_init_new(2,
             1, 0
         ),
+        NULL,
         NULL,
         NULL,
         NULL,
@@ -97,7 +98,8 @@ int main(int argc, char **argv){
             0,1,0,
             0,0,1
         ),
-        cb
+        cb,
+        NULL
     );
     test((pnet != NULL) && (pnet_get_error() == pnet_info_ok), "Test for creation with all arguments");
     pnet_delete(pnet);
@@ -119,6 +121,7 @@ int main(int argc, char **argv){
         NULL,
         NULL,
         NULL,
+        NULL,
         NULL
     );
     test((pnet == NULL) && (pnet_get_error() == pnet_error_places_init_must_not_be_null), "Test for all null args");
@@ -132,6 +135,7 @@ int main(int argc, char **argv){
         NULL,
         NULL,
         pnet_places_init_new(5, 1,0,0,0,0),
+        NULL,
         NULL,
         NULL,
         NULL,
@@ -178,35 +182,36 @@ int main(int argc, char **argv){
             0,14,0,
             0,0,1
         ),
-        cb
+        cb,
+        NULL
     );
 
-    matrix_int_t *inhibit_arcs_map = matrix_new(2,3, 1,1, 0,1, 0,0);
-    matrix_int_t *reset_arcs_map = matrix_new(2,3, 0,0, 1,1, 0,1);
-    matrix_int_t *places_init = matrix_new(3,1, 1,0,0);
-    matrix_int_t *transitions_delay = matrix_new(2,1, 0,0);
-    matrix_int_t *inputs_map = matrix_new(2,2, 0,0,0,0);
-    matrix_int_t *outputs_map = matrix_new(3,3, 1,0,0, 0,1,0, 0,0,1);
+    pnet_matrix_t *inhibit_arcs_map = pnet_matrix_new(2,3, 1,1, 0,1, 0,0);
+    pnet_matrix_t *reset_arcs_map = pnet_matrix_new(2,3, 0,0, 1,1, 0,1);
+    pnet_matrix_t *places_init = pnet_matrix_new(3,1, 1,0,0);
+    pnet_matrix_t *transitions_delay = pnet_matrix_new(2,1, 0,0);
+    pnet_matrix_t *inputs_map = pnet_matrix_new(2,2, 0,0,0,0);
+    pnet_matrix_t *outputs_map = pnet_matrix_new(3,3, 1,0,0, 0,1,0, 0,0,1);
 
     test(
         (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
-        matrix_cmp_eq(pnet->inhibit_arcs_map, inhibit_arcs_map) &&
-        matrix_cmp_eq(pnet->reset_arcs_map, reset_arcs_map) &&
-        matrix_cmp_eq(pnet->places_init, places_init) &&
-        matrix_cmp_eq(pnet->transitions_delay, transitions_delay) &&
-        matrix_cmp_eq(pnet->inputs_map, inputs_map) &&
-        matrix_cmp_eq(pnet->outputs_map, outputs_map),
+        pnet_matrix_cmp_eq(pnet->inhibit_arcs_map, inhibit_arcs_map) &&
+        pnet_matrix_cmp_eq(pnet->reset_arcs_map, reset_arcs_map) &&
+        pnet_matrix_cmp_eq(pnet->places_init, places_init) &&
+        pnet_matrix_cmp_eq(pnet->transitions_delay, transitions_delay) &&
+        pnet_matrix_cmp_eq(pnet->inputs_map, inputs_map) &&
+        pnet_matrix_cmp_eq(pnet->outputs_map, outputs_map),
         "Test for autocorrection of values "
     );
     
     pnet_delete(pnet);
-    matrix_delete(inhibit_arcs_map);
-    matrix_delete(reset_arcs_map);
-    matrix_delete(places_init);
-    matrix_delete(transitions_delay);
-    matrix_delete(inputs_map);
-    matrix_delete(outputs_map);
+    pnet_matrix_delete(inhibit_arcs_map);
+    pnet_matrix_delete(reset_arcs_map);
+    pnet_matrix_delete(places_init);
+    pnet_matrix_delete(transitions_delay);
+    pnet_matrix_delete(inputs_map);
+    pnet_matrix_delete(outputs_map);
 
     // #############################################################################
     // test for no weighted or inhibit arcs
@@ -234,6 +239,7 @@ int main(int argc, char **argv){
             0,1,0,
             0,0,1
         ),
+        NULL,
         NULL
     );
 
@@ -274,6 +280,7 @@ int main(int argc, char **argv){
             0,1,0,
             0,0,1
         ),
+        NULL,
         NULL
     );
 
@@ -322,24 +329,25 @@ int main(int argc, char **argv){
             0,1,0,
             0,0,1
         ),
-        cb
+        cb,
+        NULL
     );
 
     if(pnet != NULL){
         pnet_sense(pnet);
     }
 
-    matrix_int_t *sense = matrix_new(2, 1,  1,0);
+    pnet_matrix_t *sense = pnet_matrix_new(2, 1,  1,0);
 
     test(
         (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
-        (matrix_cmp_eq(pnet->sensitive_transitions, sense)),
+        (pnet_matrix_cmp_eq(pnet->sensitive_transitions, sense)),
         "Test sense 1"
     );
 
     pnet_delete(pnet);
-    matrix_delete(sense);
+    pnet_matrix_delete(sense);
 
     // #############################################################################
     // Test fire without weighted or reset arcs
@@ -367,6 +375,7 @@ int main(int argc, char **argv){
             0,1,0,
             0,0,1
         ),
+        NULL,
         NULL
     );
 
@@ -409,6 +418,7 @@ int main(int argc, char **argv){
             0,1,0,
             0,0,1
         ),
+        NULL,
         NULL
     );
 
@@ -450,6 +460,7 @@ int main(int argc, char **argv){
             0,1,0,
             0,0,1
         ),
+        NULL,
         NULL
     );
 
@@ -499,51 +510,52 @@ int main(int argc, char **argv){
             0,1,0,
             0,0,1
         ),
-        cb
+        cb,
+        NULL
     );
 
     // Test firing of a single transition with input event of type none
     pnet_fire(pnet, pnet_inputs_new(2, 0,0));
-    // matrix_print(pnet->places,"places");
-    matrix_int_t *places = matrix_new(3,1, 0,1,0);
+    // pnet_matrix_print(pnet->places,"places");
+    pnet_matrix_t *places = pnet_matrix_new(3,1, 0,1,0);
 
     test(
         (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
-        (matrix_cmp_eq(pnet->places, places)),
+        (pnet_matrix_cmp_eq(pnet->places, places)),
         "Test firing of a single transition with input event of type none"
     );
 
-    matrix_delete(places);
+    pnet_matrix_delete(places);
 
     // Test missfire
     pnet_fire(pnet, pnet_inputs_new(2, 0,0));
-    places = matrix_new(3,1, 0,1,0);
+    places = pnet_matrix_new(3,1, 0,1,0);
 
     test(
         (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
-        (matrix_cmp_eq(pnet->places, places)),
+        (pnet_matrix_cmp_eq(pnet->places, places)),
         "Test missfire"
     );
     
-    matrix_delete(places);
+    pnet_matrix_delete(places);
 
     // Test transition with weighted, inhibit and reset arc and input event
     pnet_fire(pnet, pnet_inputs_new(2, 1,0));
-    places = matrix_new(3,1, 0,0,1);
-    matrix_int_t *transitions = matrix_new(2,1, 0,1);
+    places = pnet_matrix_new(3,1, 0,0,1);
+    pnet_matrix_t *transitions = pnet_matrix_new(2,1, 0,1);
 
     test(
         (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
-        (matrix_cmp_eq(pnet->sensitive_transitions, transitions)) &&
-        (matrix_cmp_eq(pnet->places, places)),
+        (pnet_matrix_cmp_eq(pnet->sensitive_transitions, transitions)) &&
+        (pnet_matrix_cmp_eq(pnet->places, places)),
         "Test transition with weighted, inhibit and reset arc and input event"
     );
     
-    matrix_delete(places);
-    matrix_delete(transitions);
+    pnet_matrix_delete(places);
+    pnet_matrix_delete(transitions);
     pnet_delete(pnet);
 
     // #############################################################################
@@ -565,11 +577,12 @@ int main(int argc, char **argv){
         NULL,
         NULL,
         NULL,
+        NULL,
         NULL
     );
 
-    places = matrix_new(2,1, 0, 1);
-    transitions = matrix_new(3,1, 0,0,0);
+    places = pnet_matrix_new(2,1, 0, 1);
+    transitions = pnet_matrix_new(3,1, 0,0,0);
 
     pnet_fire(pnet, NULL);
     pnet_sense(pnet);
@@ -577,20 +590,20 @@ int main(int argc, char **argv){
     test(
         (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
-        matrix_cmp_eq(pnet->sensitive_transitions, transitions), 
+        pnet_matrix_cmp_eq(pnet->sensitive_transitions, transitions), 
         "Test for transitions sensibilization for no input_map and null input for pnet_fire"
     );
     
     test(
         (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
-        matrix_cmp_eq(pnet->places, places), 
+        pnet_matrix_cmp_eq(pnet->places, places), 
         "Test for mutual fire"
     );
 
     pnet_delete(pnet);
-    matrix_delete(places);
-    matrix_delete(transitions);
+    pnet_matrix_delete(places);
+    pnet_matrix_delete(transitions);
 
     // #############################################################################
     // Test for multiple mutual transitions and a bidirectional arc
@@ -623,17 +636,18 @@ int main(int argc, char **argv){
             0,1,0,
             0,0,1 
         ),
+        NULL,
         NULL
     );
 
-    places = matrix_new(5,1, 0,0,1,0,1);
-    matrix_int_t *outputs = matrix_new(3,1, 0,0,0);
+    places = pnet_matrix_new(5,1, 0,0,1,0,1);
+    pnet_matrix_t *outputs = pnet_matrix_new(3,1, 0,0,0);
 
     // Test for output state at start
     test(
         (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
-        matrix_cmp_eq(pnet->outputs, outputs), 
+        pnet_matrix_cmp_eq(pnet->outputs, outputs), 
         "Test for output state at start"
     );
 
@@ -643,24 +657,24 @@ int main(int argc, char **argv){
     test(
         (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
-        matrix_cmp_eq(pnet->places, places), 
+        pnet_matrix_cmp_eq(pnet->places, places), 
         "Test for multiple mutual transitions and a bidirectional arc"
     );
 
-    matrix_delete(outputs);
-    outputs = matrix_new(3,1, 1,0,1);
+    pnet_matrix_delete(outputs);
+    outputs = pnet_matrix_new(3,1, 1,0,1);
 
     // Test for output state at the end
     test(
         (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
-        matrix_cmp_eq(pnet->outputs, outputs), 
+        pnet_matrix_cmp_eq(pnet->outputs, outputs), 
         "Test for output state at the end"
     );
 
     pnet_delete(pnet);
-    matrix_delete(places);
-    matrix_delete(outputs);
+    pnet_matrix_delete(places);
+    pnet_matrix_delete(outputs);
 
     // #############################################################################
     // Test timed petri net without passing callback as argument
@@ -682,6 +696,7 @@ int main(int argc, char **argv){
         pnet_transitions_delay_new(1,
             500000
         ),
+        NULL,
         NULL,
         NULL,
         NULL
@@ -717,7 +732,8 @@ int main(int argc, char **argv){
         ),
         NULL,
         NULL,
-        cb
+        cb,
+        NULL
     );
 
     clock_t now, start;
@@ -790,10 +806,11 @@ int main(int argc, char **argv){
         NULL,
         NULL,
         NULL,
+        NULL,
         NULL
     );
 
-    places = matrix_new(4,1, 0,1,0,0);
+    places = pnet_matrix_new(4,1, 0,1,0,0);
 
     // tree fires till desired state, fourth one for error detection
     if(pnet != NULL){
@@ -806,12 +823,12 @@ int main(int argc, char **argv){
     test(
         (pnet != NULL) && 
         (pnet_get_error() == pnet_info_ok) &&
-        matrix_cmp_eq(pnet->places, places), 
+        pnet_matrix_cmp_eq(pnet->places, places), 
         "Test sample petri net 1"
     );
 
     pnet_delete(pnet);
-    matrix_delete(places);
+    pnet_matrix_delete(places);
 
     // #############################################################################
     // Test sample petri net 2
@@ -824,7 +841,7 @@ int main(int argc, char **argv){
     return 0;
 }
 
-void cb(pnet_t *pnet){
+void cb(pnet_t *pnet, void *data){
     cb_flag = true;
 }
 
