@@ -1,6 +1,6 @@
 var indexSectionsWithContent =
 {
-  0: "fimopstuvxy",
+  0: "fimoprstuvxy",
   1: "p",
   2: "p",
   3: "mpv",
@@ -8,7 +8,7 @@ var indexSectionsWithContent =
   5: "p",
   6: "p",
   7: "p",
-  8: "p"
+  8: "pr"
 };
 
 var indexSectionNames =
