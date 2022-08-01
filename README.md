@@ -10,6 +10,8 @@ Created by João Peterson Scheffer - 2022. Version 1.0-0.
 
 Licensed under the MIT License. Please reefer to the LICENSE file in the project root for license information.
 
+Documentation available on [**github pages**](https://joao-peterson.github.io/pnet/html/index.html).
+
 # TOC
 
 - [pnet - a petri net library for C/C++](#pnet---a-petri-net-library-for-cc)
