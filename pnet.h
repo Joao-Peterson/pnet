@@ -401,36 +401,36 @@ typedef struct{
  */
 struct pnet_t{
     // size
-    size_t num_places;
-    size_t num_transitions;
-    size_t num_inputs;
-    size_t num_outputs;
+    size_t num_places;                                                              /**< The number of places in the petri net */
+    size_t num_transitions;                                                         /**< The number of transitions in the petri net */
+    size_t num_inputs;                                                              /**< The number of inputs in the petri net */
+    size_t num_outputs;                                                             /**< The number of outputs in the petri net */
 
     // maps
-    pnet_matrix_t *neg_arcs_map; 
-    pnet_matrix_t *pos_arcs_map; 
-    pnet_matrix_t *inhibit_arcs_map; 
-    pnet_matrix_t *reset_arcs_map;
-    pnet_matrix_t *places_init; 
-    pnet_matrix_t *transitions_delay;
-    pnet_matrix_t *inputs_map;
-    pnet_matrix_t *outputs_map;
+    pnet_matrix_t *neg_arcs_map;                                                    /**< Matrix map of negative weighted arcs */            
+    pnet_matrix_t *pos_arcs_map;                                                    /**< Matrix map of positive weighted arcs */            
+    pnet_matrix_t *inhibit_arcs_map;                                                /**< Matrix map of inhibit arcs */                
+    pnet_matrix_t *reset_arcs_map;                                                  /**< Matrix map of reset arcs */            
+    pnet_matrix_t *places_init;                                                     /**< Matrix of the initial places tokens */            
+    pnet_matrix_t *transitions_delay;                                               /**< Matrix map of transitions delays in milliseconds */                
+    pnet_matrix_t *inputs_map;                                                      /**< Matrix map of inputs to transitions */        
+    pnet_matrix_t *outputs_map;                                                     /**< Matrix map of places to outputs */        
 
     // net state
-    pnet_matrix_t *places;                                                           /**< The actual places that hold tokens */
-    pnet_matrix_t *sensitive_transitions;                                            /**< Currently firable transitions */
+    pnet_matrix_t *places;                                                          /**< The actual places that hold tokens */
+    pnet_matrix_t *sensitive_transitions;                                           /**< Currently firable transitions */
 
     // input edges state
-    pnet_matrix_t *inputs_last;                                                      /**< The last state of the inputs, used to make edge events */
+    pnet_matrix_t *inputs_last;                                                     /**< The last state of the inputs, used to make edge events */
 
     // output values
-    pnet_matrix_t *outputs;                                                          /**< The actual output values produced by the petri net */
+    pnet_matrix_t *outputs;                                                         /**< The actual output values produced by the petri net */
 
     // async
     pnet_callback_t function;                                                       /**< Callback called by the timed thread on state change */
     void *user_data;                                                                /**< Data given by the user to passed on call to the callback function */
     pthread_t thread;                                                               /**< Thread used to time timed transitions */
-    pnet_matrix_t *transition_to_fire;                                               /**< Array used to by the timed thread to fire transitions */
+    pnet_matrix_t *transition_to_fire;                                              /**< Array used to by the timed thread to fire transitions */
 };
 
 // ------------------------------------------------------------ Functions ------------------------------------------------------------

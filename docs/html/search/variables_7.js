@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['user_5fdata_0',['user_data',['../structpnet__t.html#a3d65e01a51dd785ee86dae32ff1a41d0',1,'pnet_t']]]
+  ['sensitive_5ftransitions_0',['sensitive_transitions',['../structpnet__t.html#ad49ad912c7995a9202c777e3386505db',1,'pnet_t']]]
 ];

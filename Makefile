@@ -15,6 +15,9 @@ CC := gcc
 
 C_FLAGS :=
 
+BUILD_OPTIMIZATION := -g
+RELEASE_OPTIMIZATION := -O2
+
 I_FLAGS :=
 
 L_FLAGS := -lpthread
@@ -31,7 +34,8 @@ HEADERS += pnet_matrix.h
 HEADERS += pnet_error.h
 HEADERS += pnet.h
 
-LIB_NAME := libpnet.a
+LIB_STATIC := libpnet.a
+LIB_DYN := libpnet.so
 
 DIST_DIR := dist/
 BUILD_DIR := build/
@@ -67,31 +71,46 @@ TEST_EXE := $(BUILD_DIR)$(TEST_SOURCE:.c=.exe)
 
 .PHONY : build label clean install
 
-build : C_FLAGS += -g
+build : C_FLAGS += $(BUILD_OPTIMIZATION)
+build : $(BUILD_DIR)$(LIB_DYN) 
+build : $(BUILD_DIR)$(LIB_STATIC) 
 build : $(TEST_EXE)
-build : $(HEADERS)
-build : $(OBJS_BUILD) 
 
-release : C_FLAGS += -O2
-release : $(HEADERS)
-release : clear $(OBJS_BUILD) label doc dist
+release : C_FLAGS += $(RELEASE_OPTIMIZATION)
+release : clear
+release : $(BUILD_DIR)$(LIB_DYN) 
+release : $(BUILD_DIR)$(LIB_STATIC) 
+release : label doc dist
+
+
+dist : $(BUILD_DIR)$(LIB_STATIC) $(BUILD_DIR)$(LIB_DYN)
+	@mkdir -p $(DIST_DIR)
+	cp $(HEADERS) $(DIST_DIR)
+	cp $(BUILD_DIR)$(LIB_STATIC) $(DIST_DIR)$(LIB_STATIC)
+	cp $(BUILD_DIR)$(LIB_DYN) $(DIST_DIR)$(LIB_DYN)
+
+
+$(BUILD_DIR)$(LIB_STATIC) : C_FLAGS +=
+$(BUILD_DIR)$(LIB_STATIC) : $(OBJS_BUILD)
+	$(ARCHIVER) $(BUILD_DIR)$(LIB_STATIC) $(OBJS_BUILD)
+	
+
+$(BUILD_DIR)$(LIB_DYN) : C_FLAGS += -fPIC
+$(BUILD_DIR)$(LIB_DYN) : $(OBJS_BUILD)
+	$(CC) -shared -fPIC -o $(BUILD_DIR)$(LIB_DYN) $(OBJS_BUILD)
+
 
 $(BUILD_DIR)%.o : %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(C_FLAGS) $(I_FLAGS) -c $< -o $@
 
 
-dist : $(OBJS_BUILD)
-	@mkdir -p $(DIST_DIR)
-	$(ARCHIVER) $(DIST_DIR)$(LIB_NAME) $^
-	cp $(HEADERS) $(DIST_DIR)
+$(BUILD_DIR)%.exe : %.c
+	$(CC) $(C_FLAGS) $^ $(BUILD_DIR)$(LIB_STATIC) -o $@
 
-
-$(BUILD_DIR)%.exe : $(OBJS_BUILD) %.c
-	$(CC) $(C_FLAGS) $^ -o $@
 
 label : $(README) $(LABEL_FILES)
-# match and print
+# match and print. For testing. 
 # sed -r -n '/(Created by ).+( - )20[0-9]{2}(\. Version )[0-9]\.[0-9]{1,3}-[0-9]{1,3}(\.)/p' $^
 	sed -i -r 's/(Created by ).+( - )20[0-9]{2}(\. Version )[0-9]\.[0-9]{1,3}-[0-9]{1,3}(\.)/\1$(AUTHOR)\2$(YEAR)\3$(VERSION)\4/g' $^
 	sed -i -r 's/(PROJECT_NUMBER\s+= )[0-9]\.[0-9]{1,3}-[0-9]{1,3}/\1$(VERSION)/g' $^
@@ -99,7 +118,8 @@ label : $(README) $(LABEL_FILES)
 
 install :
 	cp -r dist/*.h $(INSTALL_INC_DIR)/
-	cp -r dist/*.a $(INSTALL_LIB_DIR)/
+	cp $(DIST_DIR)$(LIB_STATIC) $(INSTALL_LIB_DIR)/
+	cp $(DIST_DIR)$(LIB_DYN) $(INSTALL_LIB_DIR)/
 
 test :
 	$(TEST_EXE) 

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <pthread.h>
 #include "pnet.h"
+#include "pnet_error.h"
 
 // time precision for testing
 #define TIME_PRECISION_MS (10)
@@ -34,7 +35,7 @@ bool cb_flag = false;
 
 // Main #############################################################################
 int main(int argc, char **argv){
-
+    
     // #############################################################################
     // simple petrinet with two places and a single transition between them
     pnet_t *pnet = pnet_new(
