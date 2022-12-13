@@ -1,53 +1,5 @@
 #include "pnet_matrix.h"
 
-// matrix_string_t *v_matrix_string_new(size_t x, size_t y, va_list *args){
-//     if(x == 0 || y == 0) return NULL;
-    
-//     matrix_string_t *matrix = (matrix_string_t*)calloc(1, sizeof(matrix_string_t));
-//     matrix->x = x;
-//     matrix->y = y;
-//     matrix->m = (char***)calloc(y, sizeof(char**));
-
-//     for(size_t i = 0; i < y; i++){
-//         matrix->m[i] = (char**)calloc(x, sizeof(char*));
-//         for(size_t j = 0; j < x; j++){
-//             matrix->m[i][j] = va_arg(*args, char*); 
-//         }
-//     }
-
-//     return matrix;
-// }
-
-// matrix_string_t *matrix_string_new(size_t x, size_t y, ...){
-//     va_list args;
-//     va_start(args, y);
-
-//     matrix_string_t *matrix = v_matrix_string_new(x, y, &args);
-
-//     va_end(args);
-
-//     return matrix;
-// }
-
-// void matrix_string_delete(matrix_string_t *matrix){
-//     for(size_t i = 0; i < matrix->y; i++)
-//         free(matrix->m[i]);
-
-//     free(matrix->m);
-//     free(matrix);    
-// }
-
-// void matrix_string_print(matrix_string_t *matrix, char *name){
-//     printf("\"%s\" =\n", name);
-//     for(size_t i = 0; i < matrix->y; i++){
-//         printf("[");
-//         for(size_t j = 0; j < matrix->x; j++){
-//             printf(" \"%s\"", matrix->m[i][j]);        
-//         }
-//         printf(" ]\n");
-//     }
-// }
-
 pnet_matrix_t *v_pnet_matrix_new(size_t x, size_t y, va_list *args){
     pnet_matrix_t *matrix = (pnet_matrix_t*)calloc(1, sizeof(pnet_matrix_t));
     matrix->x = x;
@@ -73,6 +25,54 @@ pnet_matrix_t *pnet_matrix_new(size_t x, size_t y, ...){
     va_end(args);
 
     return matrix;
+}
+
+void pnet_matrix_modify(pnet_matrix_t *m, size_t new_x, size_t new_y){
+    size_t max_row = (m->y > new_y) ? m->y : new_y;
+    size_t min_row = (m->y < new_y) ? m->y : new_y;
+    size_t min_col = (m->x < new_x) ? m->x : new_x;
+
+    // realloc remaining rows
+    for(size_t i = 0; i < min_row-1; i++){
+        int *tmp_cols = realloc(m->m[i], new_x * sizeof(int));
+        free(m->m[i]);
+        m->m[i] = tmp_cols;
+        m->x = new_x;
+        
+        // zero created columns
+        for(size_t j = min_col; j < m->x-1; j++){
+            m->m[i][j] = 0;
+        }
+    }
+
+    // less rows
+    if(new_y < m->y){
+        // delete exceding rows
+        for(size_t i = min_row; i < max_row-1; i++){
+            free(m->m[i]);
+        }
+        
+        m->y = new_y;
+
+        // shrink matrix rows count
+        int **tmp_rows = realloc(m->m, m->y * sizeof(int*));
+        free(m->m);
+        m->m = tmp_rows;
+    }
+    // more rows
+    else if(new_y > m->y){
+        m->y = new_y;
+
+        // expand matrix rows count
+        int **tmp_rows = realloc(m->m, m->y * sizeof(int*));
+        free(m->m);
+        m->m = tmp_rows;
+
+        // create new rows
+        for(size_t i = min_row; i < max_row-1; i++){
+            m->m[i] = calloc(m->x, sizeof(int));
+        }
+    }
 }
 
 pnet_matrix_t *pnet_matrix_new_zero(size_t x, size_t y){

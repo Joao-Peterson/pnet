@@ -142,241 +142,6 @@ static void *timed_thread_main(void *arg){
     pthread_cleanup_pop(timed_thread_cleanup);
 }
 
-// validate input arguments to pnet_new() and get the number of places, transitions, inputs and outputs
-bool validate_pnet_args(
-    pnet_t *pnet, 
-    pnet_matrix_t *neg_arcs_map, 
-    pnet_matrix_t *pos_arcs_map, 
-    pnet_matrix_t *inhibit_arcs_map, 
-    pnet_matrix_t *reset_arcs_map,
-    pnet_matrix_t *places_init, 
-    pnet_matrix_t *transitions_delay,
-    pnet_matrix_t *inputs_map,
-    pnet_matrix_t *outputs_map
-){
-    // check for non nullable values
-    if(places_init == NULL){
-        pnet_set_error(pnet_error_places_init_must_not_be_null);
-        return true;
-    }
-
-    size_t transitions_num = 0;
-    size_t places_num = 0;
-    size_t inputs_num = 0;
-    size_t outputs_num = 0;
-
-    // checks negative arcs
-    if(neg_arcs_map != NULL && transitions_num == 0 && places_num == 0){
-        transitions_num = neg_arcs_map->x;
-        places_num = neg_arcs_map->y;
-
-        // check for positive values
-        for(size_t i = 0; i < neg_arcs_map->y; i++){
-            for(size_t j = 0; j < neg_arcs_map->x; j++){
-                if(neg_arcs_map->m[i][j] > 0) neg_arcs_map->m[i][j] = 0;
-            }
-        }
-    }
-    
-    // positive arcs
-    if(pos_arcs_map != NULL){
-        if(transitions_num == 0 && places_num == 0){
-            transitions_num = pos_arcs_map->x;
-            places_num = pos_arcs_map->y;
-        }
-        else{
-            // check for incorrect size
-            if(transitions_num != pos_arcs_map->x){
-                pnet_set_error(pnet_error_pos_arcs_has_incorrect_number_of_transitions);
-                return true;
-            }
-            if(places_num != pos_arcs_map->y){
-                pnet_set_error(pnet_error_pos_arcs_has_incorrect_number_of_places);
-                return true;
-            }
-        }
-
-        // check for positive values
-        for(size_t i = 0; i < pos_arcs_map->y; i++){
-            for(size_t j = 0; j < pos_arcs_map->x; j++){
-                if(pos_arcs_map->m[i][j] < 0) pos_arcs_map->m[i][j] = 0;
-            }
-        }
-    }
-
-    // inhibit arcs
-    if(inhibit_arcs_map != NULL){
-        if(transitions_num == 0 && places_num == 0){
-            transitions_num = inhibit_arcs_map->x;
-            places_num = inhibit_arcs_map->y;
-        }
-        else{
-            // check for incorrect size
-            if(transitions_num != inhibit_arcs_map->x){
-                pnet_set_error(pnet_error_inhibit_arcs_has_incorrect_number_of_transitions);
-                return true;
-            }
-            if(places_num != inhibit_arcs_map->y){
-                pnet_set_error(pnet_error_inhibit_arcs_has_incorrect_number_of_places);
-                return true;
-            }
-        }
-
-        // make all values 0 or 1 
-        for(size_t i = 0; i < inhibit_arcs_map->y; i++){
-            for(size_t j = 0; j < inhibit_arcs_map->x; j++){
-                inhibit_arcs_map->m[i][j] = !!inhibit_arcs_map->m[i][j];
-            }
-        }
-    }
-
-    // reset arcs
-    if(reset_arcs_map != NULL){
-        if(transitions_num == 0 && places_num == 0){
-            transitions_num = reset_arcs_map->x;
-            places_num = reset_arcs_map->y;
-        }
-        else{
-            // check for incorrect size
-            if(transitions_num != reset_arcs_map->x){
-                pnet_set_error(pnet_error_reset_arcs_has_incorrect_number_of_transitions);
-                return true;
-            }
-            if(places_num != reset_arcs_map->y){
-                pnet_set_error(pnet_error_reset_arcs_has_incorrect_number_of_places);
-                return true;
-            }
-        }
-
-        // make all values 0 or 1 
-        for(size_t i = 0; i < reset_arcs_map->y; i++){
-            for(size_t j = 0; j < reset_arcs_map->x; j++){
-                reset_arcs_map->m[i][j] = !!reset_arcs_map->m[i][j];
-            }
-        }
-    }
-
-    // if no arcs given
-    if(transitions_num == 0 && places_num == 0){
-        pnet_set_error(pnet_error_no_arcs_were_given);
-        return true;
-    }
-
-    // places init    
-    if(places_init != NULL){
-        if(transitions_num == 0 && places_num == 0){
-            places_num = places_init->x;
-        }
-        else{
-            // check for incorrect size
-            if(places_num != places_init->x){
-                pnet_set_error(pnet_error_places_init_has_incorrect_number_of_places_on_its_first_row);
-                return true;
-            }
-        }
-        
-        // check if single row
-        if(places_init->y != 1){
-            pnet_set_error(pnet_error_place_init_must_have_only_one_row);
-            return true;
-        }
-
-        // check for negative values
-        for(size_t i = 0; i < places_init->y; i++){
-            for(size_t j = 0; j < places_init->x; j++){
-                if(places_init->m[i][j] < 0) 
-                    places_init->m[i][j] = 0;
-            }
-        }
-    }
-
-    // transition delay
-    if(transitions_delay != NULL){
-        // check for incorrect size
-        if(transitions_num != transitions_delay->x){
-            pnet_set_error(pnet_error_transitions_delay_has_different_number_of_transitions_in_its_first_row_than_in_the_arcs);
-            return true;
-        }
-        // check if single row
-        if(transitions_delay->y != 1){
-            pnet_set_error(pnet_error_transitions_delay_must_have_only_one_row);
-            return true;
-        }
-
-        // check for negative values
-        for(size_t i = 0; i < transitions_delay->y; i++){
-            for(size_t j = 0; j < transitions_delay->x; j++){
-                if(transitions_delay->m[i][j] < 0) transitions_delay->m[i][j] = 0;
-            }
-        }
-    }
-
-    // inputs
-    if(inputs_map != NULL){
-        // check for incorrect size
-        if(transitions_num != inputs_map->x){
-            pnet_set_error(pnet_error_inputs_has_different_number_of_transitions_in_its_first_row_than_in_the_arcs);
-            return true;
-        }
-
-        // check and correct invalid values for event_non pnet_event_t values
-        for(size_t i = 0; i < inputs_map->y; i++){
-            for(size_t j = 0; j < inputs_map->x; j++){
-                if(inputs_map->m[i][j] < 0 || inputs_map->m[i][j] >= pnet_event_t_max) inputs_map->m[i][j] = pnet_event_none;
-            }
-        }
-
-        // check for multiple inputs in the same transition
-        for(size_t transition = 0; transition < inputs_map->x; transition++){
-            bool flag = false;
-            for(size_t input = 0; input < inputs_map->y; input++){
-
-                // check if value is enum pnet_event_t
-                if(
-                    (inputs_map->m[input][transition] > pnet_event_none) && 
-                    (inputs_map->m[input][transition] < pnet_event_t_max)
-                ){
-                    // if flag was marked true before, then this is another input to the same transition
-                    if(flag){
-                        pnet_set_error(pnet_error_inputs_there_are_more_than_one_input_per_transition);
-                        return true;
-                    }
-
-                    flag = true;
-                }
-            }
-        }
-
-        inputs_num = inputs_map->y;
-    }
-
-    // outputs
-    if(outputs_map != NULL){
-        // check for incorrect size
-        if(places_num != outputs_map->y){
-            pnet_set_error(pnet_error_outputs_has_different_number_of_places_in_its_first_columns_than_in_the_arcs);
-            return true;
-        }
-
-        // make all values 0 or 1 
-        for(size_t i = 0; i < outputs_map->y; i++){
-            for(size_t j = 0; j < outputs_map->x; j++){
-                outputs_map->m[i][j] = !!outputs_map->m[i][j];
-            }
-        }
-
-        outputs_num = outputs_map->x;
-    }
-    
-    // save sizes
-    pnet->num_places = places_num;
-    pnet->num_transitions = transitions_num;
-    pnet->num_inputs = inputs_num;
-    pnet->num_outputs = outputs_num;
-
-    return false;
-}
-
 // process input data for edge events
 pnet_matrix_t *pnet_input_detection(pnet_t *pnet, pnet_matrix_t *inputs){
     pnet_matrix_t *transitions = pnet_matrix_new_zero(pnet->num_transitions, 1);
@@ -442,7 +207,7 @@ pnet_matrix_t *pnet_input_detection(pnet_t *pnet, pnet_matrix_t *inputs){
 
 // ------------------------------ Public functions ---------------------------------
 
-// create pnet
+// create pnet from matrices
 pnet_t *m_pnet_new(
     pnet_matrix_t *neg_arcs_map, 
     pnet_matrix_t *pos_arcs_map, 
@@ -460,17 +225,8 @@ pnet_t *m_pnet_new(
     pnet_set_error(pnet_info_ok);
 
     // check for errors and get sizes
-    if(validate_pnet_args(
-        pnet,
-        neg_arcs_map, 
-        pos_arcs_map, 
-        inhibit_arcs_map, 
-        reset_arcs_map,
-        places_init, 
-        transitions_delay,
-        inputs_map,
-        outputs_map
-    )){
+    pnet_check(pnet);
+    if(pnet->valid == false){
         pnet_matrix_delete(neg_arcs_map);
         pnet_matrix_delete(pos_arcs_map);
         pnet_matrix_delete(inhibit_arcs_map);
@@ -541,6 +297,7 @@ pnet_t *pnet_new(
     void *data
 ){
 
+    // create with matrices
     pnet_t *pnet = m_pnet_new(
         neg_arcs_map        != NULL ? neg_arcs_map->values          : NULL,
         pos_arcs_map        != NULL ? pos_arcs_map->values          : NULL,
@@ -554,6 +311,7 @@ pnet_t *pnet_new(
         data
     );
 
+    // free input structs
     if(neg_arcs_map != NULL){
         free(neg_arcs_map);
     }
@@ -580,6 +338,246 @@ pnet_t *pnet_new(
     }
     
     return pnet;
+}
+
+// 
+
+// validate a given pnet
+void pnet_check(pnet_t *pnet){
+    // if null
+    if(pnet == NULL){
+        pnet_set_error(pnet_error_pnet_struct_pointer_passed_as_argument_is_null);
+        return;
+    }
+
+    // if already checked
+    if(pnet->valid == true){
+        pnet_set_error(pnet_info_ok);
+        return;
+    } 
+    
+    // check for non nullable values
+    if(pnet->places_init == NULL){
+        pnet_set_error(pnet_error_places_init_must_not_be_null);
+        pnet->valid = false;
+    }
+
+    size_t transitions_num = 0;
+    size_t places_num = 0;
+    size_t inputs_num = 0;
+    size_t outputs_num = 0;
+
+    // checks negative arcs
+    if(pnet->neg_arcs_map != NULL && transitions_num == 0 && places_num == 0){
+        transitions_num = pnet->neg_arcs_map->x;
+        places_num = pnet->neg_arcs_map->y;
+
+        // check for positive values
+        for(size_t i = 0; i < pnet->neg_arcs_map->y; i++){
+            for(size_t j = 0; j < pnet->neg_arcs_map->x; j++){
+                if(pnet->neg_arcs_map->m[i][j] > 0) pnet->neg_arcs_map->m[i][j] = 0;
+            }
+        }
+    }
+    
+    // positive arcs
+    if(pnet->pos_arcs_map != NULL){
+        if(transitions_num == 0 && places_num == 0){
+            transitions_num = pnet->pos_arcs_map->x;
+            places_num = pnet->pos_arcs_map->y;
+        }
+        else{
+            // check for incorrect size
+            if(transitions_num != pnet->pos_arcs_map->x){
+                pnet_set_error(pnet_error_pos_arcs_has_incorrect_number_of_transitions);
+                pnet->valid = false;
+            }
+            if(places_num != pnet->pos_arcs_map->y){
+                pnet_set_error(pnet_error_pos_arcs_has_incorrect_number_of_places);
+                pnet->valid = false;
+            }
+        }
+
+        // check for positive values
+        for(size_t i = 0; i < pnet->pos_arcs_map->y; i++){
+            for(size_t j = 0; j < pnet->pos_arcs_map->x; j++){
+                if(pnet->pos_arcs_map->m[i][j] < 0) pnet->pos_arcs_map->m[i][j] = 0;
+            }
+        }
+    }
+
+    // inhibit arcs
+    if(pnet->inhibit_arcs_map != NULL){
+        if(transitions_num == 0 && places_num == 0){
+            transitions_num = pnet->inhibit_arcs_map->x;
+            places_num = pnet->inhibit_arcs_map->y;
+        }
+        else{
+            // check for incorrect size
+            if(transitions_num != pnet->inhibit_arcs_map->x){
+                pnet_set_error(pnet_error_inhibit_arcs_has_incorrect_number_of_transitions);
+                pnet->valid = false;
+            }
+            if(places_num != pnet->inhibit_arcs_map->y){
+                pnet_set_error(pnet_error_inhibit_arcs_has_incorrect_number_of_places);
+                pnet->valid = false;
+            }
+        }
+
+        // make all values 0 or 1 
+        for(size_t i = 0; i < pnet->inhibit_arcs_map->y; i++){
+            for(size_t j = 0; j < pnet->inhibit_arcs_map->x; j++){
+                pnet->inhibit_arcs_map->m[i][j] = !!pnet->inhibit_arcs_map->m[i][j];
+            }
+        }
+    }
+
+    // reset arcs
+    if(pnet->reset_arcs_map != NULL){
+        if(transitions_num == 0 && places_num == 0){
+            transitions_num = pnet->reset_arcs_map->x;
+            places_num = pnet->reset_arcs_map->y;
+        }
+        else{
+            // check for incorrect size
+            if(transitions_num != pnet->reset_arcs_map->x){
+                pnet_set_error(pnet_error_reset_arcs_has_incorrect_number_of_transitions);
+                pnet->valid = false;
+            }
+            if(places_num != pnet->reset_arcs_map->y){
+                pnet_set_error(pnet_error_reset_arcs_has_incorrect_number_of_places);
+                pnet->valid = false;
+            }
+        }
+
+        // make all values 0 or 1 
+        for(size_t i = 0; i < pnet->reset_arcs_map->y; i++){
+            for(size_t j = 0; j < pnet->reset_arcs_map->x; j++){
+                pnet->reset_arcs_map->m[i][j] = !!pnet->reset_arcs_map->m[i][j];
+            }
+        }
+    }
+
+    // if no arcs given
+    if(transitions_num == 0 && places_num == 0){
+        pnet_set_error(pnet_error_no_arcs_were_given);
+        pnet->valid = false;
+    }
+
+    // places init    
+    if(pnet->places_init != NULL){
+        if(transitions_num == 0 && places_num == 0){
+            places_num = pnet->places_init->x;
+        }
+        else{
+            // check for incorrect size
+            if(places_num != pnet->places_init->x){
+                pnet_set_error(pnet_error_places_init_has_incorrect_number_of_places_on_its_first_row);
+                pnet->valid = false;
+            }
+        }
+        
+        // check if single row
+        if(pnet->places_init->y != 1){
+            pnet_set_error(pnet_error_place_init_must_have_only_one_row);
+            pnet->valid = false;
+        }
+
+        // check for negative values
+        for(size_t i = 0; i < pnet->places_init->y; i++){
+            for(size_t j = 0; j < pnet->places_init->x; j++){
+                if(pnet->places_init->m[i][j] < 0) 
+                    pnet->places_init->m[i][j] = 0;
+            }
+        }
+    }
+
+    // transition delay
+    if(pnet->transitions_delay != NULL){
+        // check for incorrect size
+        if(transitions_num != pnet->transitions_delay->x){
+            pnet_set_error(pnet_error_transitions_delay_has_different_number_of_transitions_in_its_first_row_than_in_the_arcs);
+            pnet->valid = false;
+        }
+        // check if single row
+        if(pnet->transitions_delay->y != 1){
+            pnet_set_error(pnet_error_transitions_delay_must_have_only_one_row);
+            pnet->valid = false;
+        }
+
+        // check for negative values
+        for(size_t i = 0; i < pnet->transitions_delay->y; i++){
+            for(size_t j = 0; j < pnet->transitions_delay->x; j++){
+                if(pnet->transitions_delay->m[i][j] < 0) pnet->transitions_delay->m[i][j] = 0;
+            }
+        }
+    }
+
+    // inputs
+    if(pnet->inputs_map != NULL){
+        // check for incorrect size
+        if(transitions_num != pnet->inputs_map->x){
+            pnet_set_error(pnet_error_inputs_has_different_number_of_transitions_in_its_first_row_than_in_the_arcs);
+            pnet->valid = false;
+        }
+
+        // check and correct invalid values for event_non pnet_event_t values
+        for(size_t i = 0; i < pnet->inputs_map->y; i++){
+            for(size_t j = 0; j < pnet->inputs_map->x; j++){
+                if(pnet->inputs_map->m[i][j] < 0 || pnet->inputs_map->m[i][j] >= pnet_event_t_max) pnet->inputs_map->m[i][j] = pnet_event_none;
+            }
+        }
+
+        // check for multiple inputs in the same transition
+        for(size_t transition = 0; transition < pnet->inputs_map->x; transition++){
+            bool flag = false;
+            for(size_t input = 0; input < pnet->inputs_map->y; input++){
+
+                // check if value is enum pnet_event_t
+                if(
+                    (pnet->inputs_map->m[input][transition] > pnet_event_none) && 
+                    (pnet->inputs_map->m[input][transition] < pnet_event_t_max)
+                ){
+                    // if flag was marked true before, then this is another input to the same transition
+                    if(flag){
+                        pnet_set_error(pnet_error_inputs_there_are_more_than_one_input_per_transition);
+                        pnet->valid = false;
+                    }
+
+                    flag = true;
+                }
+            }
+        }
+
+        inputs_num = pnet->inputs_map->y;
+    }
+
+    // outputs
+    if(pnet->outputs_map != NULL){
+        // check for incorrect size
+        if(places_num != pnet->outputs_map->y){
+            pnet_set_error(pnet_error_outputs_has_different_number_of_places_in_its_first_columns_than_in_the_arcs);
+            pnet->valid = false;
+        }
+
+        // make all values 0 or 1 
+        for(size_t i = 0; i < pnet->outputs_map->y; i++){
+            for(size_t j = 0; j < pnet->outputs_map->x; j++){
+                pnet->outputs_map->m[i][j] = !!pnet->outputs_map->m[i][j];
+            }
+        }
+
+        outputs_num = pnet->outputs_map->x;
+    }
+    
+    // save sizes
+    pnet->num_places = places_num;
+    pnet->num_transitions = transitions_num;
+    pnet->num_inputs = inputs_num;
+    pnet->num_outputs = outputs_num;
+
+    pnet->valid = true;
+    pnet_set_error(pnet_info_ok);
 }
 
 // create new arcs map object  

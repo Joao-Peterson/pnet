@@ -416,6 +416,9 @@ struct pnet_t{
     pnet_matrix_t *inputs_map;                                                      /**< Matrix map of inputs to transitions */        
     pnet_matrix_t *outputs_map;                                                     /**< Matrix map of places to outputs */        
 
+    // validation
+    bool valid;                                                                     /**< If true, the patri is able to to fire, if not the it doesnt. Call pnet_check() to validate beforehand */
+
     // net state
     pnet_matrix_t *places;                                                          /**< The actual places that hold tokens */
     pnet_matrix_t *sensitive_transitions;                                           /**< Currently firable transitions */
@@ -488,6 +491,13 @@ pnet_t *m_pnet_new(
     pnet_callback_t function,
     void *data
 );
+
+/**
+ * @brief Check if a given pnet is valid. This is a necessary call after creating a newe pnet, because if not called, you can't fire,
+ * sense or print with this petri net.
+ * @param pnet: pointer to a newly created pnet_t
+ */
+void pnet_check(pnet_t *pnet);
 
 /**
  * @brief create new arcs map object. It's freed by the calls that receive it as argument

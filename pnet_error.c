@@ -39,7 +39,8 @@ static const char* error_msg_list[] = {
     PNET_DEF_ERR(pnet_error_outputs_has_different_number_of_places_in_its_first_columns_than_in_the_arcs),
     PNET_DEF_ERR(pnet_error_pnet_struct_pointer_passed_as_argument_is_null),
     PNET_DEF_ERR(pnet_error_input_matrix_argument_size_doesnt_match_the_input_size_on_the_pnet_provided),
-    PNET_DEF_ERR(pnet_error_thread_could_not_be_created)
+    PNET_DEF_ERR(pnet_error_thread_could_not_be_created),
+    PNET_DEF_ERR(pnet_error_value_out_of_bounds)
 };
 
 // return global error code

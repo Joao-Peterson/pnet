@@ -41,6 +41,7 @@ typedef enum{
     pnet_error_pnet_struct_pointer_passed_as_argument_is_null,
     pnet_error_input_matrix_argument_size_doesnt_match_the_input_size_on_the_pnet_provided,
     pnet_error_thread_could_not_be_created,
+    pnet_error_value_out_of_bounds,
 }pnet_error_t;
 
 /**
