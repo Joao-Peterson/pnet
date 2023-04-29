@@ -224,6 +224,16 @@ pnet_t *m_pnet_new(
 
     pnet_set_error(pnet_info_ok);
 
+    // copy matrices
+    pnet->neg_arcs_map = neg_arcs_map;  
+    pnet->pos_arcs_map = pos_arcs_map;  
+    pnet->inhibit_arcs_map = inhibit_arcs_map;  
+    pnet->reset_arcs_map = reset_arcs_map; 
+    pnet->places_init = places_init;  
+    pnet->transitions_delay = transitions_delay; 
+    pnet->inputs_map = inputs_map; 
+    pnet->outputs_map = outputs_map; 
+
     // check for errors and get sizes
     pnet_check(pnet);
     if(pnet->valid == false){
@@ -238,16 +248,6 @@ pnet_t *m_pnet_new(
         free(pnet);
         return NULL;
     } 
-
-    // copy matrices
-    pnet->neg_arcs_map = neg_arcs_map;  
-    pnet->pos_arcs_map = pos_arcs_map;  
-    pnet->inhibit_arcs_map = inhibit_arcs_map;  
-    pnet->reset_arcs_map = reset_arcs_map; 
-    pnet->places_init = places_init;  
-    pnet->transitions_delay = transitions_delay; 
-    pnet->inputs_map = inputs_map; 
-    pnet->outputs_map = outputs_map; 
 
     pnet->places = pnet_matrix_duplicate(pnet->places_init);
     pnet->sensitive_transitions = pnet_matrix_new_zero(pnet->num_transitions, 1);
@@ -340,8 +340,6 @@ pnet_t *pnet_new(
     return pnet;
 }
 
-// 
-
 // validate a given pnet
 void pnet_check(pnet_t *pnet){
     // if null
@@ -360,7 +358,11 @@ void pnet_check(pnet_t *pnet){
     if(pnet->places_init == NULL){
         pnet_set_error(pnet_error_places_init_must_not_be_null);
         pnet->valid = false;
+        return;
     }
+
+    pnet->valid = true;
+    pnet_set_error(pnet_info_ok);
 
     size_t transitions_num = 0;
     size_t places_num = 0;
@@ -575,9 +577,6 @@ void pnet_check(pnet_t *pnet){
     pnet->num_transitions = transitions_num;
     pnet->num_inputs = inputs_num;
     pnet->num_outputs = outputs_num;
-
-    pnet->valid = true;
-    pnet_set_error(pnet_info_ok);
 }
 
 // create new arcs map object  
@@ -687,17 +686,17 @@ void pnet_sense(pnet_t *pnet){
 
             /**
              * to fire, sufficient tokens must be available, 
-             * by adding the existing token to the required tokens, w_minus, we can compare to see
+             * by adding the existing token to the required tokens, we can compare to see
              * if the transition is firable, that is, after the sum, the transition column should
              * be zero or bigger, indicating that there are enought or more tokens to satisfy the
              * subtraction.
              */
             
-            if(
+            if(                                                                                     // check desensibilization
                 // negative arcs
                 (
                     (pnet->neg_arcs_map != NULL) &&                                                 // when there are negative arcs
-                    (pnet->neg_arcs_map->m[place][transition] != 0) &&                              // when there is a requirement for this transition/place
+                    (pnet->neg_arcs_map->m[place][transition] != 0) &&                              // when there is a neg arc for this transition/place
                     ((pnet->neg_arcs_map->m[place][transition] + pnet->places->m[0][place]) < 0)    // and there is not enough tokens
                 ) ||
                 // inhibit arcs          
@@ -717,10 +716,10 @@ void pnet_sense(pnet_t *pnet){
 }
 
 // fire the transitions
-void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
+void m_pnet_fire(pnet_t *pnet, pnet_matrix_t *inputs){
     if(pnet == NULL){
         pnet_set_error(pnet_error_pnet_struct_pointer_passed_as_argument_is_null);
-        pnet_matrix_delete(inputs->values);
+        pnet_matrix_delete(inputs);
         free(inputs);
         return;
     } 
@@ -740,10 +739,10 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
     if(
         (inputs != NULL) && 
         (pnet->num_inputs != 0) && 
-        (inputs->values->x != pnet->num_inputs))
+        (inputs->x != pnet->num_inputs))
     {                
         pnet_set_error(pnet_error_input_matrix_argument_size_doesnt_match_the_input_size_on_the_pnet_provided);
-        pnet_matrix_delete(inputs->values);
+        pnet_matrix_delete(inputs);
         free(inputs);
         return;                                        
     }
@@ -755,7 +754,7 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
         pnet->reset_arcs_map == NULL
     ){                 
         pnet_set_error(pnet_info_no_weighted_arcs_nor_reset_arcs_provided_no_token_will_be_moved_or_set);
-        pnet_matrix_delete(inputs->values);
+        pnet_matrix_delete(inputs);
         free(inputs);
         return;
     }
@@ -763,8 +762,8 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
     // get input events, the result are the transitions that where activated by the configured input/transitions event type
     pnet_matrix_t *input_event_transitions;
     if(inputs != NULL){
-        input_event_transitions = pnet_input_detection(pnet, inputs->values);
-        pnet_matrix_delete(inputs->values);
+        input_event_transitions = pnet_input_detection(pnet, inputs);
+        pnet_matrix_delete(inputs);
         free(inputs);
     }
     else{
@@ -804,6 +803,13 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
     #endif
     pnet_matrix_delete(transitions_able_to_fire);
     pnet_matrix_delete(input_event_transitions);
+
+}
+
+// fire the transitions
+void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
+    m_pnet_fire(pnet, inputs->values);
+    free(inputs);
 }
 
 // print the petri net 

@@ -121,7 +121,7 @@ install :
 	cp $(DIST_DIR)$(LIB_STATIC) $(INSTALL_LIB_DIR)/
 	cp $(DIST_DIR)$(LIB_DYN) $(INSTALL_LIB_DIR)/
 
-test :
+test : build
 	$(TEST_EXE) 
 
 mem : 
