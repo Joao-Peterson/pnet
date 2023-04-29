@@ -555,6 +555,13 @@ void pnet_delete(pnet_t *pnet);
  * @param pnet: the pnet struct pointer
  * @param inputs: matrix of one row and columns the same size of the inputs given on pnet_new()
  */
+void m_pnet_fire(pnet_t *pnet, pnet_matrix_t *inputs);
+
+/**
+ * @brief fire the transitions based on the inputs and internal state. Sensitive transitions are NOT updated after firing
+ * @param pnet: the pnet struct pointer
+ * @param inputs: matrix of one row and columns the same size of the inputs given on pnet_new()
+ */
 void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs);
 
 /**
