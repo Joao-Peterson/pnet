@@ -720,7 +720,6 @@ void m_pnet_fire(pnet_t *pnet, pnet_matrix_t *inputs){
     if(pnet == NULL){
         pnet_set_error(pnet_error_pnet_struct_pointer_passed_as_argument_is_null);
         pnet_matrix_delete(inputs);
-        free(inputs);
         return;
     } 
 
@@ -743,7 +742,6 @@ void m_pnet_fire(pnet_t *pnet, pnet_matrix_t *inputs){
     {                
         pnet_set_error(pnet_error_input_matrix_argument_size_doesnt_match_the_input_size_on_the_pnet_provided);
         pnet_matrix_delete(inputs);
-        free(inputs);
         return;                                        
     }
 
@@ -755,7 +753,6 @@ void m_pnet_fire(pnet_t *pnet, pnet_matrix_t *inputs){
     ){                 
         pnet_set_error(pnet_info_no_weighted_arcs_nor_reset_arcs_provided_no_token_will_be_moved_or_set);
         pnet_matrix_delete(inputs);
-        free(inputs);
         return;
     }
 
@@ -764,7 +761,6 @@ void m_pnet_fire(pnet_t *pnet, pnet_matrix_t *inputs){
     if(inputs != NULL){
         input_event_transitions = pnet_input_detection(pnet, inputs);
         pnet_matrix_delete(inputs);
-        free(inputs);
     }
     else{
         input_event_transitions = pnet_input_detection(pnet, NULL);
@@ -808,7 +804,7 @@ void m_pnet_fire(pnet_t *pnet, pnet_matrix_t *inputs){
 
 // fire the transitions
 void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
-    m_pnet_fire(pnet, inputs->values);
+    m_pnet_fire(pnet, inputs != NULL ? inputs->values : NULL);
     free(inputs);
 }
 
