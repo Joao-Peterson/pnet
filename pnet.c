@@ -177,7 +177,6 @@ pnet_matrix_t *pnet_input_detection(pnet_t *pnet, pnet_matrix_t *inputs){
             continue;
         }
         
-        bool all_zero = false;
         for(size_t input = 0; input < pnet->num_inputs; input++){
 
 

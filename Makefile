@@ -13,7 +13,7 @@
 
 CC := gcc
 
-C_FLAGS :=
+C_FLAGS := -Wall
 
 BUILD_OPTIMIZATION := -g
 RELEASE_OPTIMIZATION := -O2

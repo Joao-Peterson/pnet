@@ -865,10 +865,10 @@ void test_call(bool condition, char *text, char *file, int line, int dummy){
     make_bar(test_counter, total, bar, 20, '#');
     
     if(condition){
-        printf("[TEST: %3d / %d] [%s] [%s:%-4d] [PASSED]: %s\n", test_counter, total, bar, file, line, text);
+        printf("[TEST: %3lu / %d] [%s] [%s:%-4d] [PASSED]: %s\n", test_counter, total, bar, file, line, text);
     }
     else{
-        printf("[TEST: %3d / %d] [%s] [%s:%-4d] [FAILED]: [PNET_ERR: %s] %s\n", test_counter, total, bar, file, line, pnet_get_error_msg(), text);
+        printf("[TEST: %3lu / %d] [%s] [%s:%-4d] [FAILED]: [PNET_ERR: %s] %s\n", test_counter, total, bar, file, line, pnet_get_error_msg(), text);
         fail_counter++;
     }
 
@@ -876,5 +876,5 @@ void test_call(bool condition, char *text, char *file, int line, int dummy){
 }
 
 void test_summary(void){
-    printf("[SUMMARY]: %d succeeded, %d failed\n", test_counter - fail_counter, fail_counter);
+    printf("[SUMMARY]: %lu succeeded, %lu failed\n", test_counter - fail_counter, fail_counter);
 }
