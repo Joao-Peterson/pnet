@@ -453,8 +453,8 @@ struct pnet_t{
  * @return pnet_t struct pointer
  */
 pnet_t *pnet_new(
-    pnet_arcs_map_t *pos_arcs_map, 
     pnet_arcs_map_t *neg_arcs_map, 
+    pnet_arcs_map_t *pos_arcs_map, 
     pnet_arcs_map_t *inhibit_arcs_map, 
     pnet_arcs_map_t *reset_arcs_map,
     pnet_places_t *places_init, 
@@ -480,8 +480,8 @@ pnet_t *pnet_new(
  * @return pnet_t struct pointer
  */
 pnet_t *m_pnet_new(
-    pnet_matrix_t *pos_arcs_map, 
     pnet_matrix_t *neg_arcs_map, 
+    pnet_matrix_t *pos_arcs_map, 
     pnet_matrix_t *inhibit_arcs_map, 
     pnet_matrix_t *reset_arcs_map,
     pnet_matrix_t *places_init, 

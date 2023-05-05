@@ -299,12 +299,15 @@ INSTALL_INC_DIR
 
 This implementation uses matrix representation and custom independent algorithms by the author for sensing and firing the petri net.
 
+Positive and negative arcs are separated instead of using a single matrix for weighted arcs, that allows for arcs to be defined from a place to that same place, which is intended design/functionality.
+
 # TODO
 
 - Prioritized petri net, add priority to transitions
 - Make special calls for reading the output, or make up another type of abstraction that don't involves matrix_int_t 
 - Callback for output change
 - Analysis tools
+- Analysis to highlight mutual firing transitions
 - PNML support
 - Better abstraction for embedding purposes
 - Timed implementation for embedded systems, custom timers

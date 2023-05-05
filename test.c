@@ -832,7 +832,44 @@ int main(int argc, char **argv){
 
     // #############################################################################
     // Test sample petri net 2
+    pnet_matrix_t *m = pnet_matrix_new_zero(1,3);
+    m->m[0][0] = -1; 
+    m->m[1][0] =  0; 
+    m->m[2][0] = -2; 
+    
+    pnet = m_pnet_new(
+        m,
+        pnet_matrix_new(1,3,
+             0, 
+             1,
+             0 
+        ),
+        NULL,
+        NULL,
+        pnet_matrix_new(3, 1,
+            1,0,32
+        ),
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    );
 
+    if(pnet != NULL){
+        pnet_fire(pnet, NULL);
+    }
+
+    test(
+        (pnet != NULL) && 
+        (pnet_get_error() == pnet_info_ok) &&
+        (pnet->places->m[0][0] == 0) && 
+        (pnet->places->m[0][1] == 1) && 
+        (pnet->places->m[0][2] == 30), 
+        "Test sample petri net 2"
+    );
+
+    pnet_delete(pnet);
 
     // #############################################################################
     test_summary();
@@ -876,5 +913,5 @@ void test_call(bool condition, char *text, char *file, int line, int dummy){
 }
 
 void test_summary(void){
-    printf("[SUMMARY]: %lu succeeded, %lu failed\n", test_counter - fail_counter, fail_counter);
+    printf("[SUMMARY]: %lu succeeded, %lu failed\n", test_counter - 1 - fail_counter, fail_counter);
 }
