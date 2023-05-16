@@ -322,10 +322,7 @@
 #include <time.h>
 #include "pnet_error.h"
 #include "pnet_matrix.h"
-
-// ------------------------------------------------------------ Defines --------------------------------------------------------------
-
-#define CLOCK_TO_MS(x) ((int)((x) * 1000 / CLOCKS_PER_SEC))
+#include "data.h"
 
 // ------------------------------------------------------------ Enumerators ----------------------------------------------------------
 
@@ -350,7 +347,7 @@ typedef struct pnet_t pnet_t;
 /**
  * @brief typedef for a callback function signature
  */
-typedef void (*pnet_callback_t)(pnet_t *pnet, void *data);
+typedef void (*pnet_callback_t)(pnet_t *pnet, size_t transition, void *data);
 
 // ------------------------------------------------------------ Structs ------------------------------------------------------------
 
@@ -433,7 +430,8 @@ struct pnet_t{
     pnet_callback_t function;                                                       /**< Callback called by the timed thread on state change */
     void *user_data;                                                                /**< Data given by the user to passed on call to the callback function */
     pthread_t thread;                                                               /**< Thread used to time timed transitions */
-    pnet_matrix_t *transition_to_fire;                                              /**< Array used to by the timed thread to fire transitions */
+    pthread_mutex_t lock;                                                           /**< Mutex used by the timed thread */
+    queue_t *transition_to_fire;                                                    /**< Queue used to by the timed thread to fire transitions */
 };
 
 // ------------------------------------------------------------ Functions ------------------------------------------------------------
@@ -571,7 +569,7 @@ void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs);
 void pnet_print(pnet_t *pnet);
 
 /**
- * @brief compute if the transitions are sensibilized
+ * @brief compute if the transitions are sensibilized. 
  * @param pnet: the pnet struct pointer
  */
 void pnet_sense(pnet_t *pnet);

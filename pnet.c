@@ -1,8 +1,11 @@
 #include "pnet.h"
 #include "pnet_error.h"
 #include "pnet_error_priv.h"
+#include "data.h"
 
-// #define _PNET_DEBUG_
+// ------------------------------------------------------------ Defines --------------------------------------------------------------
+
+#define CLOCK_TO_MS(x) ((int)((x) * 1000 / CLOCKS_PER_SEC))
 
 // ------------------------------ Private functions --------------------------------
 
@@ -24,8 +27,11 @@ void pnet_output_set(pnet_t *pnet){
 }
 
 // move tokens around
+// thread safe
 void pnet_move(pnet_t *pnet){
 
+    pthread_mutex_lock(&(pnet->lock));
+    
     // will hold the results
     pnet_matrix_t *places_res = pnet_matrix_duplicate(pnet->places);
     pnet_matrix_t *arcs_transposed = NULL;
@@ -85,6 +91,8 @@ void pnet_move(pnet_t *pnet){
     pnet_output_set(pnet);
 
     pnet_matrix_delete(places_res);
+
+    pthread_mutex_unlock(&(pnet->lock));
 }
 
 // timed thread cleanup function
@@ -99,39 +107,43 @@ static void *timed_thread_main(void *arg){
     pnet_t *pnet = (pnet_t*)arg;
     clock_t *time = (clock_t*)calloc(pnet->num_transitions, sizeof(clock_t));
 
-    pthread_cleanup_push(timed_thread_cleanup, time);
+    pthread_cleanup_push(timed_thread_cleanup, time);                               // exec cleanup after thread exits
 
     while(1){
         pthread_testcancel();
 
-        if(pnet->transitions_delay != NULL){
-            for(size_t transition = 0; transition < pnet->num_transitions; transition++){
-                // only on timed transitions
-                if(pnet->transitions_delay->m[0][transition] == 0)
-                    continue;
+        if(pnet->transitions_delay != NULL){                                        // if there are timed transitions
 
-                // start counting
-                if(pnet->transition_to_fire->m[0][transition] == 1 && time[transition] == 0){
+            pnet_sense(pnet);
+        
+            for(queue_foreach(transition_node, pnet->transition_to_fire)){          // loop through the queue of timed transitions
+                size_t transition = queue_node_value(transition_node, size_t);
+
+                if(time[transition] == 0){                                          // start counting
                     time[transition] = clock();
-                    pnet->transition_to_fire->m[0][transition] = 0;
                     continue;
                 }
-
-                // count
-                if(time[transition] > 0){
+                else{                                                               // continue counting
                     clock_t now = clock();
-                    // after elapsed time 
-                    if( (CLOCK_TO_MS(now - time[transition])) >= pnet->transitions_delay->m[0][transition] ){
+
+                    if(pnet->sensitive_transitions->m[0][transition] == 0){         // if it became unsensibilized
+                        time[transition] = 0;
+                        // pop
+                        continue;
+                    }
+                    
+                    if(                                                             // after elapsed time 
+                        (CLOCK_TO_MS(now - time[transition])) >= 
+                        pnet->transitions_delay->m[0][transition]
+                    ){
                         
                         time[transition] = 0;
+                        // pop
 
-                        // re check sensibility
                         pnet_sense(pnet);
-                        if(pnet->sensitive_transitions->m[0][transition] == 1){
-                            // move tokens
-                            pnet_move(pnet);
-                            // call callback
-                            if(pnet->function != NULL) pnet->function(pnet, pnet->user_data);
+                        if(pnet->sensitive_transitions->m[0][transition] == 1){     // re check sensibility
+                            pnet_move(pnet);                                        // FIRE!! move tokens and call callback
+                            if(pnet->function != NULL) pnet->function(pnet, transition, pnet->user_data);
                         }
                     }
                 }
@@ -252,8 +264,7 @@ pnet_t *m_pnet_new(
     pnet->sensitive_transitions = pnet_matrix_new_zero(pnet->num_transitions, 1);
     pnet->inputs_last = pnet_matrix_new_zero(pnet->num_inputs, 1);
     pnet->outputs = pnet_matrix_new_zero(pnet->num_outputs, 1);
-    pnet->transition_to_fire = pnet_matrix_new_zero(pnet->num_transitions, 1);
-
+    
     if(transitions_delay != NULL && function == NULL){
         pnet_set_error(pnet_info_no_callback_function_was_passed_while_using_timed_transitions_watch_out);
     }
@@ -262,6 +273,9 @@ pnet_t *m_pnet_new(
     pnet->function = function;
     pnet->user_data = data;
     int res = pthread_create(&(pnet->thread), NULL, timed_thread_main, pnet);
+    pnet->transition_to_fire = queue_new_thread_safe();
+    pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    pnet->lock = lock;
 
     // on thread create error
     if(res != 0){
@@ -665,6 +679,7 @@ void pnet_delete(pnet_t *pnet){
 }
 
 // check for sensibilized transitions, one transition is retuned at a time
+// thread safe
 void pnet_sense(pnet_t *pnet){
     if(pnet == NULL){
         pnet_set_error(pnet_error_pnet_struct_pointer_passed_as_argument_is_null);
@@ -675,6 +690,8 @@ void pnet_sense(pnet_t *pnet){
         pnet_set_error(pnet_info_no_neg_arcs_nor_inhibit_arcs_provided_no_transition_will_be_sensibilized);
         return;
     } 
+
+    pthread_mutex_lock(&(pnet->lock));
 
     // zero sensibilized transitions
     pnet_matrix_set(pnet->sensitive_transitions, 0);
@@ -712,6 +729,8 @@ void pnet_sense(pnet_t *pnet){
 
         if(pnet->sensitive_transitions->m[0][transition] == 1) break;                               // return after the first transition is sensibilzed
     }
+
+    pthread_mutex_unlock(&(pnet->lock));
 }
 
 // fire the transitions
@@ -767,38 +786,35 @@ void m_pnet_fire(pnet_t *pnet, pnet_matrix_t *inputs){
 
     // sense transitions
     pnet_sense(pnet);
-    
+
     // transitions that are sensibilized and got the event 
     pnet_matrix_t *transitions_able_to_fire = pnet_matrix_and(input_event_transitions, pnet->sensitive_transitions);
-    // copy to pnet so the thread can fire them
-    pnet_matrix_copy(pnet->transition_to_fire, transitions_able_to_fire);
 
-    // fire on instant transitions
+    // fire instant transitions
     for(size_t transition = 0; transition < pnet->num_transitions; transition++){
-        if(
-            (pnet->transition_to_fire->m[0][transition] == 1) &&                    // firable transition
-            (
+        if(transitions_able_to_fire->m[0][transition] == 1){                        // firable transition
+            if(
                 (pnet->transitions_delay == NULL) ||                                // not timed
                 (
                     (pnet->transitions_delay != NULL) &&                            // timed 
                     (pnet->transitions_delay->m[0][transition] == 0)                // but instant
                 )
-            )
-        ){
-            // move and callback
-            pnet_move(pnet);        
-            pnet->transition_to_fire->m[0][transition] = 0;
-            if(pnet->function != NULL) pnet->function(pnet, pnet->user_data);
-            break;
+            ){
+                // move and callback
+                pnet_move(pnet);        
+                if(pnet->function != NULL) pnet->function(pnet, transition, pnet->user_data);
+                break;                                                              // only one instant transitions
+            }
+            else{
+                // add to queue
+                queue_push_unique(pnet->transition_to_fire, size_t, transition);
+            }
+
         }
     }
 
-    #ifdef _PNET_DEBUG_
-        pnet_matrix_print(transitions_able_to_fire, "transitions_able_to_fire");
-    #endif
     pnet_matrix_delete(transitions_able_to_fire);
     pnet_matrix_delete(input_event_transitions);
-
 }
 
 // fire the transitions

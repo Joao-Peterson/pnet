@@ -241,7 +241,7 @@ pnet->outputs
 
 ### Callback
 
-A callback of type `pnet_callback_t` must be provided as argument when using timed transitions. **It will** be called after the execution of the delay for a given transition and that transition is still sensible. **It will not be called** when a instant transition was fired.
+A callback of type `pnet_callback_t` must be provided as argument when using timed transitions. **It will** be called after the execution of the delay for a given transition and that transition is still sensible. **It is also called** when a instant transition was fired.
 
 It's form is as follows:
 
