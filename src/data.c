@@ -118,7 +118,7 @@ void* _queue_pop_value(queue_t *queue){
 
 	queue_lock();
 
-	//
+	// 
 
 	queue->size--;
 

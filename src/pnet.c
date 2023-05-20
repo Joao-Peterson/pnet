@@ -3,10 +3,6 @@
 #include "pnet_error_priv.h"
 #include "data.h"
 
-// ------------------------------------------------------------ Defines --------------------------------------------------------------
-
-#define CLOCK_TO_MS(x) ((int)((x) * 1000 / CLOCKS_PER_SEC))
-
 // ------------------------------ Private functions --------------------------------
 
 // set outputs accordingly to the places

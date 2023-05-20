@@ -28,7 +28,7 @@ void test_summary(void);
 #define test(condition, text) test_call((condition), text, __FILE__, __LINE__, __COUNTER__);
 
 // callback and global flag
-void cb(pnet_t *pnet, void *data);
+void cb(pnet_t *pnet, size_t transition, void *data);
 bool cb_flag = false;
 
 
@@ -878,7 +878,7 @@ int main(int argc, char **argv){
     return 0;
 }
 
-void cb(pnet_t *pnet, void *data){
+void cb(pnet_t *pnet, size_t transition, void *data){
     cb_flag = true;
 }
 
