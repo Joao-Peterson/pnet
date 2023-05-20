@@ -5,7 +5,6 @@
 #include <string.h>
 #include <pthread.h>
 #include "pnet.h"
-#include "pnet_error.h"
 
 // time precision for testing
 #define TIME_PRECISION_MS (10)

@@ -1,12 +1,10 @@
-![](https://img.shields.io/github/license/Joao-Peterson/pnet) ![](https://img.shields.io/badge/Version-1.0--0-brightgreen) ![](https://img.shields.io/github/last-commit/Joao-Peterson/pnet)
+![](https://img.shields.io/github/license/Joao-Peterson/pnet) ![](https://img.shields.io/badge/Version-1.1.0-brightgreen) ![](https://img.shields.io/github/last-commit/Joao-Peterson/pnet)
 
 # pnet - a petri net library for C/C++
 
 Easily make petri nets in C/C++. This library can create high level timed petri nets, with negated arcs and reset arcs, input events and outputs.
 
 Is intended for embedding!
-
-Created by João Peterson Scheffer - 2022. Version 1.0-0.
 
 Licensed under the MIT License. Please reefer to the LICENSE file in the project root for license information.
 

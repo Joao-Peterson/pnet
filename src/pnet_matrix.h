@@ -4,9 +4,8 @@
  * pnet - easly make petri nets in C/C++ code. This library can create high level timed petri nets, with support for nesting,
  * negated arcs, reset arcs, inputs and outputs and tools for analisys, simulation and compiling petri nets to other forms of code.
  * Is intended for embedding!
- * Supports the PNML standard with read/write functions!
  * 
- * Created by João Peterson Scheffer - 2022. Version 1.0-0.
+ * Created by {AUTHOR} - {YEAR}. Version {VERSION}.
  * 
  * Licensed under the MIT License. Please refeer to the LICENSE file in the project root for license information.
  */
@@ -69,6 +68,24 @@ pnet_matrix_t *pnet_matrix_new_zero(size_t x, size_t y);
 void pnet_matrix_delete(pnet_matrix_t *matrix);
 
 /**
+ * @brief get a value from a matrix
+ * @param matrix: pointer to matrix
+ * @param x: column index
+ * @param y: row index
+ * @return 0 if value not found
+ */
+int pnet_matrix_get(pnet_matrix_t *m, size_t x, size_t y);
+
+/**
+ * @brief set a value on a matrix
+ * @param matrix: pointer to matrix
+ * @param x: column index
+ * @param y: row index
+ * @param value: new int value
+ */
+void pnet_matrix_set(pnet_matrix_t *m, size_t x, size_t y, int value);
+
+/**
  * @brief prints a matrix in ascii form
  */
 void pnet_matrix_print(pnet_matrix_t *matrix, char *name);
@@ -126,6 +143,11 @@ bool pnet_matrix_cmp_eq(pnet_matrix_t *a, pnet_matrix_t *b);
 /**
  * @brief sets all values of a matrix to the specified number 
  */
-void pnet_matrix_set(pnet_matrix_t *m, int number);
+void pnet_matrix_set_all(pnet_matrix_t *m, int number);
+
+/**
+ * @brief returns a columns from matrix
+ */
+pnet_matrix_t *pnet_matrix_extract_col(pnet_matrix_t *m, size_t x);
 
 #endif

@@ -23,10 +23,14 @@ AR_FLAGS=-rcs
 SRC_DIR=src
 BUILD_DIR=build
 DIST_DIR=dist
-
+DOC_DIR=docs
 INSTALL_BIN_DIR := /usr/local/bin
 INSTALL_LIB_DIR := /usr/lib
 INSTALL_INC_DIR := /usr/local/include
+
+AUTHOR = João Peterson Scheffer
+YEAR = 2023
+VERSION = 1.1.0
 
 # File recipes --------------------------------------------------
 
@@ -41,16 +45,22 @@ release : dist
 tests : test.o libpnet.a
 	$(CC) $(L_FLAGS) $(addprefix $(BUILD_DIR)/, $(notdir $^)) -o $@
 
-dist : libpnet.a libpnet.so
+dist : libpnet.a libpnet.so 
 	@mkdir -p $(DIST_DIR)
 	@cp -vr $(BUILD_DIR)/*.so $(DIST_DIR)/ 
 	@cp -vr $(BUILD_DIR)/*.a $(DIST_DIR)/ 
 	@cp -vr $(SRC_DIR)/*.h $(DIST_DIR)/ 
+	@cp -v  README.md $(DIST_DIR)/ 
+	sed -r -i 's/(\{AUTHOR\})/$(AUTHOR)/g' $(DIST_DIR)/*.h 
+	sed -r -i 's/(\{YEAR\})/$(YEAR)/g' $(DIST_DIR)/*.h 
+	sed -r -i 's/(\{VERSION\})/$(VERSION)/g' $(DIST_DIR)/*.h 
+	sed -i -r 's/(badge\/Version-)[0-9]\.[0-9]{1,3}--[0-9]{1,3}/\1$(subst -,--,$(VERSION))/g' README.md $(DIST_DIR)/README.md
+	sed -i -r 's/(PROJECT_NUMBER\s+= )[0-9]\.[0-9]{1,3}-[0-9]{1,3}/\1$(VERSION)/g' $(DOC_DIR)/Doxyfile
 
-libpnet.a : src/pnet.o src/data.o src/pnet_matrix.o src/pnet_error.o
+libpnet.a : src/pnet.o src/queue.o src/pnet_matrix.o src/pnet_error.o
 	$(AR) $(AR_FLAGS) $(addprefix $(BUILD_DIR)/, $@) $(addprefix $(BUILD_DIR)/, $(notdir $^))
 
-libpnet.so : src/pnet.o src/data.o src/pnet_matrix.o src/pnet_error.o
+libpnet.so : src/pnet.o src/queue.o src/pnet_matrix.o src/pnet_error.o
 	$(CC) -shared $(addprefix $(BUILD_DIR)/, $(notdir $^)) -o $(addprefix $(BUILD_DIR)/, $@)
 
 # Other recipes (Dont edit) ----------------------------------------
@@ -77,11 +87,6 @@ mem :
 	valgrind -s --leak-check=full $(TEST_EXE)
 # valgrind --tool=callgrind $(TEST_EXE)
 
-label : $(README) $(LABEL_FILES)
-# match and print. For testing. 
-# sed -r -n '/(Created by ).+( - )20[0-9]{2}(\. Version )[0-9]\.[0-9]{1,3}-[0-9]{1,3}(\.)/p' $^
-	sed -i -r 's/(Created by ).+( - )20[0-9]{2}(\. Version )[0-9]\.[0-9]{1,3}-[0-9]{1,3}(\.)/\1$(AUTHOR)\2$(YEAR)\3$(VERSION)\4/g' $^
-	sed -i -r 's/(PROJECT_NUMBER\s+= )[0-9]\.[0-9]{1,3}-[0-9]{1,3}/\1$(VERSION)/g' $^
-
-doc : label
-	doxygen -q $(DOC_DIR)Doxyfile
+doc : dist
+	doxygen -q $(DOC_DIR)/Doxyfile
+ 

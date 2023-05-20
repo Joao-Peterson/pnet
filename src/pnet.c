@@ -1,7 +1,6 @@
 #include "pnet.h"
-#include "pnet_error.h"
 #include "pnet_error_priv.h"
-#include "data.h"
+#include "queue.h"
 
 // ------------------------------ Private functions --------------------------------
 
@@ -24,60 +23,58 @@ void pnet_output_set(pnet_t *pnet){
 
 // move tokens around
 // thread safe
-void pnet_move(pnet_t *pnet){
+void pnet_move(pnet_t *pnet, size_t transition){
 
     pthread_mutex_lock(&(pnet->lock));
     
     // will hold the results
     pnet_matrix_t *places_res = pnet_matrix_duplicate(pnet->places);
-    pnet_matrix_t *arcs_transposed = NULL;
-    pnet_matrix_t *buffer = NULL;
-    pnet_matrix_t *buffer2 = NULL;
 
     // for weighted arcs, only if at least one of them is not null
     if(pnet->pos_arcs_map != NULL || pnet->neg_arcs_map != NULL){
         
         pnet_matrix_t *weighted_matrix = NULL;
+        pnet_matrix_t *pos_weighted_matrix = NULL;
+        pnet_matrix_t *neg_weighted_matrix = NULL;
 
-        // sum pos and neg arcs first, if null then use the non null one
-        if(pnet->pos_arcs_map != NULL && pnet->neg_arcs_map != NULL)
-            weighted_matrix = pnet_matrix_add(pnet->neg_arcs_map, pnet->pos_arcs_map);
-        else if(pnet->pos_arcs_map != NULL)
-            weighted_matrix = pnet_matrix_duplicate(pnet->pos_arcs_map);
-        else if(pnet->neg_arcs_map != NULL)
-            weighted_matrix = pnet_matrix_duplicate(pnet->neg_arcs_map);
+        // extract the values from the arcs for the transition 
+        if(pnet->pos_arcs_map != NULL)
+            pos_weighted_matrix = pnet_matrix_extract_col(pnet->pos_arcs_map, transition);
+        if(pnet->neg_arcs_map != NULL)
+            neg_weighted_matrix = pnet_matrix_extract_col(pnet->neg_arcs_map, transition);
 
-        // multiply the transitions by the arcs matrix, the effect is that the result matrix gives
-        // the amount of tokens to be added/subtracted by every place
-        arcs_transposed = pnet_matrix_transpose(weighted_matrix);
-        pnet_matrix_t *buffer = pnet_matrix_mul(pnet->transition_to_fire, arcs_transposed);
-
+        // sum the pos and neg values or returning only the non null maps  
+        if(pos_weighted_matrix != NULL && neg_weighted_matrix != NULL){
+            weighted_matrix = pnet_matrix_add(pos_weighted_matrix, neg_weighted_matrix);
+            pnet_matrix_delete(pos_weighted_matrix);
+            pnet_matrix_delete(neg_weighted_matrix);
+        }
+        else if(neg_weighted_matrix != NULL)
+            weighted_matrix = neg_weighted_matrix;
+        else
+            weighted_matrix = pos_weighted_matrix;
+            
         // finnaly adding the difference in tokens for the places, effectly moving the tokens
-        buffer2 = pnet_matrix_add(pnet->places, buffer);
-        pnet_matrix_copy(places_res, buffer2);
-        pnet_matrix_delete(buffer);
-        pnet_matrix_delete(buffer2);
+        pnet_matrix_t *buffer = pnet_matrix_add(places_res, weighted_matrix);
+        pnet_matrix_copy(places_res, buffer);
         pnet_matrix_delete(weighted_matrix);
-        pnet_matrix_delete(arcs_transposed);
+        pnet_matrix_delete(buffer);
     }
 
     // for reset arcs
     if(pnet->reset_arcs_map != NULL){
-        // multiply the transitions by the arcs matrix, the effect is that the result matrix marks
-        // with 1, or more, if a place must be set to zero
-        arcs_transposed = pnet_matrix_transpose(pnet->reset_arcs_map);
-        buffer = pnet_matrix_mul(pnet->transition_to_fire, arcs_transposed);
+        // get places to reset for a given transition        
+        pnet_matrix_t *places_reset = pnet_matrix_extract_col(pnet->reset_arcs_map, transition);
 
-        // negate so its a 0 for a place to be reset, in that way we can then multiply by it element by element, 
-        // zeroing out the places where needed
-        buffer2 = pnet_matrix_neg(buffer);
-        pnet_matrix_delete(buffer); 
-        buffer = pnet_matrix_mul_by_element(buffer2, places_res);
+        // negate so its a 0 for a place to be reset, that way we can then multiply it with the places element by element, zeroing out the places where needed
+        pnet_matrix_t *places_reset_neg = pnet_matrix_neg(places_reset);
+        pnet_matrix_delete(places_reset);
+
+        pnet_matrix_t *buffer = pnet_matrix_mul_by_element(places_res, places_reset_neg);
         pnet_matrix_copy(places_res, buffer);
 
+        pnet_matrix_delete(places_reset_neg);
         pnet_matrix_delete(buffer);
-        pnet_matrix_delete(buffer2);
-        pnet_matrix_delete(arcs_transposed);
     }
 
     // copy values to the pnet
@@ -93,56 +90,24 @@ void pnet_move(pnet_t *pnet){
 
 // timed thread cleanup function
 static void timed_thread_cleanup(void *arg){
-    clock_t *time = (clock_t*)arg;
-    free(time);
     return;
 }
 
 // timed thread function
 static void *timed_thread_main(void *arg){
     pnet_t *pnet = (pnet_t*)arg;
-    clock_t *time = (clock_t*)calloc(pnet->num_transitions, sizeof(clock_t));
 
     pthread_cleanup_push(timed_thread_cleanup, time);                               // exec cleanup after thread exits
 
     while(1){
         pthread_testcancel();
 
-        if(pnet->transitions_delay != NULL){                                        // if there are timed transitions
-
+        transition_t transition;
+        if(transition_queue_pop(pnet->transition_to_fire, &transition)){
             pnet_sense(pnet);
-        
-            for(queue_foreach(transition_node, pnet->transition_to_fire)){          // loop through the queue of timed transitions
-                size_t transition = queue_node_value(transition_node, size_t);
-
-                if(time[transition] == 0){                                          // start counting
-                    time[transition] = clock();
-                    continue;
-                }
-                else{                                                               // continue counting
-                    clock_t now = clock();
-
-                    if(pnet->sensitive_transitions->m[0][transition] == 0){         // if it became unsensibilized
-                        time[transition] = 0;
-                        // pop
-                        continue;
-                    }
-                    
-                    if(                                                             // after elapsed time 
-                        (CLOCK_TO_MS(now - time[transition])) >= 
-                        pnet->transitions_delay->m[0][transition]
-                    ){
-                        
-                        time[transition] = 0;
-                        // pop
-
-                        pnet_sense(pnet);
-                        if(pnet->sensitive_transitions->m[0][transition] == 1){     // re check sensibility
-                            pnet_move(pnet);                                        // FIRE!! move tokens and call callback
-                            if(pnet->function != NULL) pnet->function(pnet, transition, pnet->user_data);
-                        }
-                    }
-                }
+            if(pnet->sensitive_transitions->m[0][transition.transition] == 1){      // re check sensibility
+                pnet_move(pnet, transition.transition);                             // FIRE!! move tokens and call callback
+                if(pnet->function != NULL) pnet->function(pnet, transition.transition, pnet->user_data);
             }
         }
     }
@@ -268,10 +233,10 @@ pnet_t *m_pnet_new(
     // async
     pnet->function = function;
     pnet->user_data = data;
-    int res = pthread_create(&(pnet->thread), NULL, timed_thread_main, pnet);
-    pnet->transition_to_fire = queue_new_thread_safe();
+    pnet->transition_to_fire = transition_queue_new();
     pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
     pnet->lock = lock;
+    int res = pthread_create(&(pnet->thread), NULL, timed_thread_main, pnet);
 
     // on thread create error
     if(res != 0){
@@ -670,7 +635,7 @@ void pnet_delete(pnet_t *pnet){
     pnet_matrix_delete(pnet->sensitive_transitions);
     pnet_matrix_delete(pnet->inputs_last);
     pnet_matrix_delete(pnet->outputs);
-    pnet_matrix_delete(pnet->transition_to_fire);
+    transition_queue_destroy(pnet->transition_to_fire);
     free(pnet);
 }
 
@@ -690,7 +655,7 @@ void pnet_sense(pnet_t *pnet){
     pthread_mutex_lock(&(pnet->lock));
 
     // zero sensibilized transitions
-    pnet_matrix_set(pnet->sensitive_transitions, 0);
+    pnet_matrix_set_all(pnet->sensitive_transitions, 0);
 
     for(size_t transition = 0; transition < pnet->num_transitions; transition++){
         pnet->sensitive_transitions->m[0][transition] = 1;                          // set transition to sensibilized
@@ -786,7 +751,7 @@ void m_pnet_fire(pnet_t *pnet, pnet_matrix_t *inputs){
     // transitions that are sensibilized and got the event 
     pnet_matrix_t *transitions_able_to_fire = pnet_matrix_and(input_event_transitions, pnet->sensitive_transitions);
 
-    // fire instant transitions
+    // fire transitions
     for(size_t transition = 0; transition < pnet->num_transitions; transition++){
         if(transitions_able_to_fire->m[0][transition] == 1){                        // firable transition
             if(
@@ -797,13 +762,13 @@ void m_pnet_fire(pnet_t *pnet, pnet_matrix_t *inputs){
                 )
             ){
                 // move and callback
-                pnet_move(pnet);        
+                pnet_move(pnet, transition);        
                 if(pnet->function != NULL) pnet->function(pnet, transition, pnet->user_data);
                 break;                                                              // only one instant transitions
             }
             else{
                 // add to queue
-                queue_push_unique(pnet->transition_to_fire, size_t, transition);
+                transition_queue_push(pnet->transition_to_fire, transition, pnet->transitions_delay->m[0][transition]);
             }
 
         }

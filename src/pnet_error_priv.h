@@ -1,7 +1,7 @@
 #ifndef _PNET_ERROR_PRIV_HEADER_
 #define _PNET_ERROR_PRIV_HEADER_
 
-#include "pnet_error.h"
+#include "pnet.h"
 
 /**
  * @brief max string length for error messeges

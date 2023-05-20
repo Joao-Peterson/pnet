@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include "pnet_error.h"
+#include "pnet.h"
 #include "pnet_error_priv.h"
 
 // put enum name to string
@@ -40,7 +40,11 @@ static const char* error_msg_list[] = {
     PNET_DEF_ERR(pnet_error_pnet_struct_pointer_passed_as_argument_is_null),
     PNET_DEF_ERR(pnet_error_input_matrix_argument_size_doesnt_match_the_input_size_on_the_pnet_provided),
     PNET_DEF_ERR(pnet_error_thread_could_not_be_created),
-    PNET_DEF_ERR(pnet_error_value_out_of_bounds)
+    PNET_DEF_ERR(pnet_error_matrix_passed_is_null),
+    PNET_DEF_ERR(pnet_error_matrix_index_x_y_out_of_range),
+    PNET_DEF_ERR(pnet_error_matrices_should_be_of_the_same_size),
+    PNET_DEF_ERR(pnet_error_matrices_should_be_square_matrices),
+    PNET_DEF_ERR(pnet_error_matrices_should_be_tranposed_equivalents)
 };
 
 // return global error code
