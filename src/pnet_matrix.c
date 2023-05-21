@@ -133,17 +133,14 @@ pnet_matrix_t *pnet_matrix_new_zero(size_t x, size_t y){
 }
 
 void pnet_matrix_delete(pnet_matrix_t *matrix){
-    if(matrix == NULL){
-        pnet_set_error(pnet_error_matrix_passed_is_null);
+    if(matrix == NULL)
         return;
-    };
     
     for(size_t i = 0; i < matrix->y; i++)
         free(matrix->m[i]);
 
     free(matrix->m);
     free(matrix);
-    pnet_set_error(pnet_info_ok);
 }
 
 void pnet_matrix_print(pnet_matrix_t *matrix, char *name){

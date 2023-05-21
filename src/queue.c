@@ -133,7 +133,7 @@ void transition_queue_push(transition_queue_t *queue, size_t transition, int del
 }
 
 bool transition_queue_pop(transition_queue_t *queue, transition_t *transition){
-	if(queue == NULL || queue->q->size == 0 | transition == NULL) return false;
+	if(queue == NULL || queue->q->size == 0 || transition == NULL) return false;
 	queue_lock();
 	int now = CLOCK_TO_MS(clock());
 

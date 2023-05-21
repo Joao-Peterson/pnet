@@ -738,18 +738,18 @@ int main(int argc, char **argv){
     clock_t now, start;
     bool precision = true;
     int last_elapsed = 0;
+    cb_flag = false;
 
-    // approximately one second of tests
+    // approximately three second of tests
     for(size_t i = 0; i < TIME_TEST_LOOP_MAX; i++){
         // start clock
         start = clock();
-        cb_flag = false;
         
         // fire
         pnet_fire(pnet, NULL);
 
         // wait
-        while(cb_flag == false){
+        while(!cb_flag){
             now = clock();
         }
 
@@ -758,7 +758,7 @@ int main(int argc, char **argv){
         last_elapsed = elapsed_time;
 
         // test
-        if(abs(elapsed_time - TIME_TEST_DELAY_MS) > TIME_PRECISION_MS){
+        if(abs(elapsed_time - TIME_TEST_DELAY_MS) >= TIME_PRECISION_MS){
             precision = false;
             break;
         }
@@ -772,6 +772,52 @@ int main(int argc, char **argv){
     free(msg);
     pnet_delete(pnet);
     
+    // #############################################################################
+    // Test multi timed petri
+
+    pnet = pnet_new(
+        pnet_arcs_map_new(3, 2,
+            -1,-1,-1,
+            0,0,0
+        ),
+        pnet_arcs_map_new(3, 2,
+            0,0,0,
+            1,2,3
+        ),
+        NULL,
+        NULL,
+        pnet_places_init_new(2, 1, 0),
+        pnet_transitions_delay_new(3, 300, 200, 100),
+        NULL,
+        NULL,
+        cb,
+        NULL
+    );
+
+    cb_flag = false;
+    places = pnet_matrix_new(2, 1, 0, 3);
+
+    // tree fires till desired state, fourth one for error detection
+    if(pnet != NULL){
+        pnet_fire(pnet, NULL);
+        cb_flag = false;
+        pnet_fire(pnet, NULL);
+        cb_flag = false;
+        pnet_fire(pnet, NULL);
+        cb_flag = false;
+        while(!cb_flag);
+    }
+
+    test(
+        (pnet != NULL) && 
+        (pnet_get_error() == pnet_info_ok) &&
+        pnet_matrix_cmp_eq(pnet->places, places), 
+        "Test multi timed petri"
+    );
+    
+    pnet_delete(pnet);
+    pnet_matrix_delete(places);
+
     // #############################################################################
     // Test sample petri net 1
     pnet = pnet_new(

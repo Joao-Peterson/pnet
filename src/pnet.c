@@ -107,7 +107,8 @@ static void *timed_thread_main(void *arg){
             pnet_sense(pnet);
             if(pnet->sensitive_transitions->m[0][transition.transition] == 1){      // re check sensibility
                 pnet_move(pnet, transition.transition);                             // FIRE!! move tokens and call callback
-                if(pnet->function != NULL) pnet->function(pnet, transition.transition, pnet->user_data);
+                if(pnet->function != NULL) 
+                    pnet->function(pnet, transition.transition, pnet->user_data);
             }
         }
     }
@@ -622,6 +623,7 @@ void pnet_delete(pnet_t *pnet){
     // cancel thread before freeing stuff
     pthread_cancel(pnet->thread);
     pthread_join(pnet->thread,NULL);
+    pthread_mutex_destroy(&(pnet->lock));
 
     pnet_matrix_delete(pnet->pos_arcs_map); 
     pnet_matrix_delete(pnet->neg_arcs_map); 
@@ -658,7 +660,7 @@ void pnet_sense(pnet_t *pnet){
     pnet_matrix_set_all(pnet->sensitive_transitions, 0);
 
     for(size_t transition = 0; transition < pnet->num_transitions; transition++){
-        pnet->sensitive_transitions->m[0][transition] = 1;                          // set transition to sensibilized
+        pnet->sensitive_transitions->m[0][transition] = 1;                                          // set transition to sensibilized
         for(size_t place = 0; place < pnet->num_places; place++){
 
             /**
@@ -688,7 +690,7 @@ void pnet_sense(pnet_t *pnet){
             }                                                                        
         }
 
-        if(pnet->sensitive_transitions->m[0][transition] == 1) break;                               // return after the first transition is sensibilzed
+        // if(pnet->sensitive_transitions->m[0][transition] == 1) break;                               // return after the first transition is sensibilzed
     }
 
     pthread_mutex_unlock(&(pnet->lock));
@@ -708,6 +710,7 @@ void m_pnet_fire(pnet_t *pnet, pnet_matrix_t *inputs){
         (pnet->num_inputs == 0)
     ){
         pnet_set_error(pnet_info_inputs_were_passed_but_no_input_map_was_set_when_the_petri_net_was_created);
+        return;
     }
     else{
         pnet_set_error(pnet_info_ok);
