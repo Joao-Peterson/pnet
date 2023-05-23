@@ -710,6 +710,7 @@ void m_pnet_fire(pnet_t *pnet, pnet_matrix_t *inputs){
         (pnet->num_inputs == 0)
     ){
         pnet_set_error(pnet_info_inputs_were_passed_but_no_input_map_was_set_when_the_petri_net_was_created);
+        pnet_matrix_delete(inputs);
         return;
     }
     else{

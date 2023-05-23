@@ -98,6 +98,8 @@ void transition_queue_push(transition_queue_t *queue, size_t transition, int del
 
 			if(node_value.transition == tran_data.transition){
 				queue_unlock();
+				free(tran_node);
+				free(tran);
 				return;
 			}
 			

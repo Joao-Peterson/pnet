@@ -83,8 +83,8 @@ clear :
 	@rm -vf *.o
 	@rm -vf tests
 
-mem : 
-	valgrind -s --leak-check=full $(TEST_EXE)
+mem :
+	valgrind -s --leak-check=full ./tests
 # valgrind --tool=callgrind $(TEST_EXE)
 
 doc : dist
