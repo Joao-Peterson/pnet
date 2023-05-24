@@ -1,14 +1,14 @@
 var indexSectionsWithContent =
 {
-  0: "fimnoprstuvxy",
-  1: "p",
+  0: "filmnoprstuvxy",
+  1: "pt",
   2: "p",
   3: "mpv",
-  4: "fimnoprstuxy",
+  4: "filmnoprstuvxy",
   5: "p",
   6: "p",
   7: "p",
-  8: "pr"
+  8: "p"
 };
 
 var indexSectionNames =

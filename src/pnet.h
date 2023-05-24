@@ -227,7 +227,7 @@
  * It's form is as follows:
  * 
  * ```c
- * void cb(pnet_t *pnet, void *data){
+ * void cb(pnet_t *pnet, size_t transition, void *data){
  *     your_data_struct *my_data = (your_data_struct*)data;
  *     
  *     // you code here
@@ -306,6 +306,8 @@
  * Created by {AUTHOR} - {YEAR}. Version {VERSION}.
  * 
  * Licensed under the MIT License. Please refeer to the LICENSE file in the project root for license information.
+ * 
+ * The main file on the lib, contains the main data structure for the petri net, types, error handling and functions to use on the petri net.
  */
 
 #ifndef _PNET_HEADER_

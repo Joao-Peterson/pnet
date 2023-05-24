@@ -30,22 +30,22 @@ INSTALL_INC_DIR := /usr/local/include
 
 AUTHOR = João Peterson Scheffer
 YEAR = 2023
-VERSION = 1.1.0
+VERSION = 1.1.1
 
 # File recipes --------------------------------------------------
 
-.PHONY : build clear build_dir dist_dir
+.PHONY : build clear build_dir dist_dir dist
 
 build : C_FLAGS += $(C_FLAGS_DEBUG)
-build : build_dir tests
+build : build_dir libpnet.a libpnet.so tests
 
 release : C_FLAGS += $(C_FLAGS_RELEASE)
-release : dist
+release : build_dir libpnet.a libpnet.so dist doc
 
 tests : test.o libpnet.a
 	$(CC) $(L_FLAGS) $(addprefix $(BUILD_DIR)/, $(notdir $^)) -o $@
 
-dist : libpnet.a libpnet.so 
+dist : 
 	@mkdir -p $(DIST_DIR)
 	@cp -vr $(BUILD_DIR)/*.so $(DIST_DIR)/ 
 	@cp -vr $(BUILD_DIR)/*.a $(DIST_DIR)/ 
@@ -54,8 +54,8 @@ dist : libpnet.a libpnet.so
 	sed -r -i 's/(\{AUTHOR\})/$(AUTHOR)/g' $(DIST_DIR)/*.h 
 	sed -r -i 's/(\{YEAR\})/$(YEAR)/g' $(DIST_DIR)/*.h 
 	sed -r -i 's/(\{VERSION\})/$(VERSION)/g' $(DIST_DIR)/*.h 
-	sed -i -r 's/(badge\/Version-)[0-9]\.[0-9]{1,3}--[0-9]{1,3}/\1$(subst -,--,$(VERSION))/g' README.md $(DIST_DIR)/README.md
-	sed -i -r 's/(PROJECT_NUMBER\s+= )[0-9]\.[0-9]{1,3}-[0-9]{1,3}/\1$(VERSION)/g' $(DOC_DIR)/Doxyfile
+	sed -r -i 's/(badge\/Version-)([0-9]\.[0-9]\.[0-9])/\1$(VERSION)/g' README.md $(DIST_DIR)/README.md
+	sed -r -i 's/(PROJECT_NUMBER\s+= )([0-9]\.[0-9]\.[0-9])/\1$(VERSION)/g' $(DOC_DIR)/Doxyfile
 
 libpnet.a : src/pnet.o src/queue.o src/pnet_matrix.o src/pnet_error.o
 	$(AR) $(AR_FLAGS) $(addprefix $(BUILD_DIR)/, $@) $(addprefix $(BUILD_DIR)/, $(notdir $^))

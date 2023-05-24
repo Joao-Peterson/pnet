@@ -5,9 +5,12 @@
  * negated arcs, reset arcs, inputs and outputs and tools for analisys, simulation and compiling petri nets to other forms of code.
  * Is intended for embedding!
  * 
- * Created by João Peterson Scheffer - 2023. Version 1.1.0.
+ * Created by João Peterson Scheffer - 2023. Version 1.1.1.
  * 
  * Licensed under the MIT License. Please refeer to the LICENSE file in the project root for license information.
+ * 
+ * Pnet matrices are simple matrices made using dynamic allocated int's that are used inside the pnet_t type to represent places, 
+ * transitions, inputs and outputs and all internal logic. Some helper function are implemented for internal use but exposed here if needed.  
  */
 
 #ifndef _PNET_MATRIX_HEADER_
@@ -69,7 +72,7 @@ void pnet_matrix_delete(pnet_matrix_t *matrix);
 
 /**
  * @brief get a value from a matrix
- * @param matrix: pointer to matrix
+ * @param m: pointer to matrix
  * @param x: column index
  * @param y: row index
  * @return 0 if value not found
@@ -78,7 +81,7 @@ int pnet_matrix_get(pnet_matrix_t *m, size_t x, size_t y);
 
 /**
  * @brief set a value on a matrix
- * @param matrix: pointer to matrix
+ * @param m: pointer to matrix
  * @param x: column index
  * @param y: row index
  * @param value: new int value

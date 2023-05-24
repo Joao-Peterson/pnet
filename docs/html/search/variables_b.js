@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['y_0',['y',['../structpnet__matrix__t.html#a0c606bcd7467b55d8a7f31bf69d16265',1,'pnet_matrix_t']]]
+  ['valid_0',['valid',['../structpnet__t.html#a4d9a1d4a61b0baf4669c47543ea54c1b',1,'pnet_t']]]
 ];

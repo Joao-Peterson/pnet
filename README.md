@@ -1,4 +1,4 @@
-![](https://img.shields.io/github/license/Joao-Peterson/pnet) ![](https://img.shields.io/badge/Version-1.1.0-brightgreen) ![](https://img.shields.io/github/last-commit/Joao-Peterson/pnet)
+![](https://img.shields.io/github/license/Joao-Peterson/pnet) ![](https://img.shields.io/badge/Version-1.1.1-brightgreen) ![](https://img.shields.io/github/last-commit/Joao-Peterson/pnet)
 
 # pnet - a petri net library for C/C++
 
@@ -244,7 +244,7 @@ A callback of type `pnet_callback_t` must be provided as argument when using tim
 It's form is as follows:
 
 ```c
-void cb(pnet_t *pnet, void *data){
+void cb(pnet_t *pnet, size_t transition, void *data){
     your_data_struct *my_data = (your_data_struct*)data;
     
     // you code here
