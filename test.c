@@ -943,6 +943,27 @@ int main(int argc, char **argv){
     pnet_matrix_delete(mserial);
 
     // #############################################################################
+    // Test matrix serialization/deserialization
+
+    mserial = pnet_matrix_new(4, 4,
+        0, 0, 0, 1,
+        64, 0, 0, 1,
+        0, 0, 0, 0,
+        0, 0, INT32_MAX, 16
+    );
+
+    bytes = 0;
+    serialized_matrix = pnet_matrix_serialize(mserial, &bytes);
+
+    pnet_matrix_t *deserialized_matrix = pnet_matrix_deserialize(serialized_matrix, bytes);
+
+    test(pnet_matrix_cmp_eq(mserial, deserialized_matrix), "Compare if matrix == deserialize(serialize(matrixm))");
+
+    free(serialized_matrix);
+    pnet_matrix_delete(mserial);
+    pnet_matrix_delete(deserialized_matrix);
+
+    // #############################################################################
     test_summary();
 
     // test for rush conditions with the timed transitions

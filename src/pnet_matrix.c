@@ -441,13 +441,31 @@ pnet_matrix_t *pnet_matrix_extract_col(pnet_matrix_t *m, size_t x){
     return ret;
 }
 
-#define pushtoblock(block, block_size, type, value) \
-    *((type*)(block + block_size)) = value; \
-    block_size += sizeof(type)
+void pushtoblock(uint8_t *block, size_t *size_allocated, size_t *size_written, size_t size_min_realloc, size_t value_size, void *value){
+    if((*size_written + value_size) >= *size_allocated){
+        *size_allocated += size_min_realloc;
+        block = realloc(block, *size_allocated);
+    }
+
+    memcpy((block + (*size_written)), value, value_size);
+    *size_written += value_size;
+}
 
 uint8_t *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written){
-    //                    #       header              # + # row index + (column index + value ...)# + # row and col dividers #
-    uint8_t *data = malloc(sizeof(pnet_matrix_header_t) + (2 * (m->x + 1) * m->y * sizeof(int32_t)));
+    // checks
+    if(m == NULL){
+        if(bytes_written != NULL) *bytes_written = 0;
+        return NULL;
+    }
+     
+    if(m->x >= 0x80000000){
+        if(bytes_written != NULL) *bytes_written = 0;
+        return NULL;
+    } 
+    
+    // small amount to start, header + one full row
+    size_t data_allocated = sizeof(pnet_matrix_header_t) + m->x * sizeof(int32_t);
+    uint32_t *data = malloc(data_allocated);
 
     pnet_matrix_header_t header = {
         .x = m->x & UINT32_MAX,
@@ -457,8 +475,7 @@ uint8_t *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written){
 
     *((pnet_matrix_header_t*)data) = header;                                        // ooga booga
 
-    uint8_t *mdata = &(((pnet_matrix_header_t*)data)->first_byte);
-    size_t mdata_size = 0;
+    size_t data_written = sizeof(uint32_t)*2;                                       // 2 uint32 for the header
     
     for(uint32_t y = 0; y < header.y; y++){                                         // run throught stuff, only index row if there is at least a non zero value
         bool rowindexed = false;
@@ -467,20 +484,42 @@ uint8_t *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written){
             if(m->m[y][x] == 0) continue;
 
             if(!rowindexed){
-                // row
-                pushtoblock(mdata, mdata_size, uint32_t, y | 0x70000000);
+                uint32_t row_index = y | 0x80000000;
+                pushtoblock(data, &data_allocated, &data_written, header.x, sizeof(row_index), &row_index);                 // row
                 rowindexed = true;
             }
 
-            // col for value
-            pushtoblock(mdata, mdata_size, uint32_t, x);   
-            // value
-            pushtoblock(mdata, mdata_size, int32_t, (int32_t)(m->m[y][x]));
+            pushtoblock(data, &data_allocated, &data_written, header.x, sizeof(x), &x);                                     // col for value
+            int32_t value = (int32_t)(m->m[y][x]); 
+            pushtoblock(data, &data_allocated, &data_written, header.x, sizeof(value), &value);                             // value
         }
     }
 
     if(bytes_written != NULL) 
-        *bytes_written = mdata_size + sizeof(uint32_t)*2;                           // x and y size for the headeer
+        *bytes_written = data_written;
 
     return data;
+}
+
+pnet_matrix_t *pnet_matrix_deserialize(uint8_t *data, size_t data_size){
+    if(data == NULL || data_size < sizeof(uint32_t)) return NULL;
+    
+    pnet_matrix_header_t *header = (pnet_matrix_header_t*)data;                     // ooga booga
+    pnet_matrix_t *m = pnet_matrix_new_zero(header->x, header->y);
+
+    uint32_t row = 0;
+    for(size_t data_read = 0; data_read < data_size; data_read += sizeof(uint32_t)){
+        if(*(data + data_read) & 0x80000000){                                       // on new row
+            row = *(data + data_read) & (~0x80000000);
+            continue;
+        }
+
+        uint32_t col = *(data + data_read);
+        data_read += sizeof(col);
+        int32_t value = (int32_t) *(data + data_read);
+
+        m->m[row][col] = value;
+    }
+
+    return m;
 }
