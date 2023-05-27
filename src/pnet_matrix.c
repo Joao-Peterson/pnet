@@ -440,3 +440,47 @@ pnet_matrix_t *pnet_matrix_extract_col(pnet_matrix_t *m, size_t x){
     pnet_set_error(pnet_info_ok);
     return ret;
 }
+
+#define pushtoblock(block, block_size, type, value) \
+    *((type*)(block + block_size)) = value; \
+    block_size += sizeof(type)
+
+uint8_t *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written){
+    //                    #       header              # + # row index + (column index + value ...)# + # row and col dividers #
+    uint8_t *data = malloc(sizeof(pnet_matrix_header_t) + (2 * (m->x + 1) * m->y * sizeof(int32_t)));
+
+    pnet_matrix_header_t header = {
+        .x = m->x & UINT32_MAX,
+        .y = m->y & UINT32_MAX,
+        .first_byte = 0
+    };
+
+    *((pnet_matrix_header_t*)data) = header;                                        // ooga booga
+
+    uint8_t *mdata = &(((pnet_matrix_header_t*)data)->first_byte);
+    size_t mdata_size = 0;
+    
+    for(uint32_t y = 0; y < header.y; y++){                                         // run throught stuff, only index row if there is at least a non zero value
+        bool rowindexed = false;
+        
+        for(uint32_t x = 0; x < header.x; x++){
+            if(m->m[y][x] == 0) continue;
+
+            if(!rowindexed){
+                // row
+                pushtoblock(mdata, mdata_size, uint32_t, y | 0x70000000);
+                rowindexed = true;
+            }
+
+            // col for value
+            pushtoblock(mdata, mdata_size, uint32_t, x);   
+            // value
+            pushtoblock(mdata, mdata_size, int32_t, (int32_t)(m->m[y][x]));
+        }
+    }
+
+    if(bytes_written != NULL) 
+        *bytes_written = mdata_size + sizeof(uint32_t)*2;                           // x and y size for the headeer
+
+    return data;
+}

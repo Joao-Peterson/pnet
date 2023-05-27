@@ -22,7 +22,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
-// ------------------------------ Structs ----------------------------------------
+// ------------------------------------------------------------ Types --------------------------------------------------------------
 
 /**
  * @brief matrix of type int, can be constructed by calling pnet_matrix_new(), v_pnet_matrix_new() or pnet_matrix_new_zero()
@@ -33,6 +33,17 @@ typedef struct{
     int **m;                                                                        /**< pointer to an array of size y that contains pointers to rows of size x */
 }pnet_matrix_t;
 
+#pragma pack(push,1)
+/**
+ * @brief defines a header for serialized pnet matrices
+ */
+typedef struct{
+    uint32_t x;
+    uint32_t y;
+    uint8_t first_byte;
+}pnet_matrix_header_t;
+#pragma(pop)
+
 // /**
 //  * @brief matrix of string type, can be created by calling matrix_string_new() or v_matrix_string_new()
 //  */
@@ -41,6 +52,8 @@ typedef struct{
 //     size_t y;
 //     char ***m;
 // }matrix_string_t;
+
+// ------------------------------------------------------------ Fuctions -----------------------------------------------------------
 
 // matrix_string_t *v_matrix_string_new(size_t x, size_t y, va_list *args);
 
@@ -152,5 +165,13 @@ void pnet_matrix_set_all(pnet_matrix_t *m, int number);
  * @brief returns a columns from matrix
  */
 pnet_matrix_t *pnet_matrix_extract_col(pnet_matrix_t *m, size_t x);
+
+/**
+ * @brief serialize a matrix
+ * @note "matrix serialization": [[0, 255], [[2, 2]] -> 70000000 00000001 000000FF 70000001 00000000 00000002 00000001 00000002
+ * @param m: the pnet_matrix
+ * @param bytes_written: the bytes written are wrote here
+ */
+uint8_t *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written);
 
 #endif

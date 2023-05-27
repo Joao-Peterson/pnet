@@ -93,6 +93,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpnet__matrix__t.html">pnet_matrix_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">matrix of type int, can be constructed by calling <a class="el" href="pnet__matrix_8h.html#aeb3a32a1036c066bfade735eefa89eee" title="creates a new matrix given it&#39;s size and values as var args">pnet_matrix_new()</a>, <a class="el" href="pnet__matrix_8h.html#abf085a0ec9b3f5e478390da1efc3d5f6" title="creates a new matrix based a vlist of arguments and size">v_pnet_matrix_new()</a> or <a class="el" href="pnet__matrix_8h.html#aa4c6ebd64ecfb72bcf3dbec3628cc02a" title="creates a new matrix fille dwith zeroes">pnet_matrix_new_zero()</a>  <a href="structpnet__matrix__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structpnet__matrix__header__t.html">pnet_matrix_header_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">defines a header for serialized pnet matrices  <a href="structpnet__matrix__header__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -170,6 +173,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>pnet_matrix_set_all</
 <a class="el" href="structpnet__matrix__t.html">pnet_matrix_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>pnet_matrix_extract_col</b> (<a class="el" href="structpnet__matrix__t.html">pnet_matrix_t</a> *m, size_t x)</td></tr>
 <tr class="memdesc:acce0746fe48536e0f353dac3ecee8261"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns a columns from matrix <br /></td></tr>
 <tr class="separator:acce0746fe48536e0f353dac3ecee8261"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac196f6ddb2841366bff959a315e22efc"><td class="memItemLeft" align="right" valign="top"><a id="ac196f6ddb2841366bff959a315e22efc" name="ac196f6ddb2841366bff959a315e22efc"></a>
+uint8_t *&#160;</td><td class="memItemRight" valign="bottom"><b>pnet_matrix_serialize</b> (<a class="el" href="structpnet__matrix__t.html">pnet_matrix_t</a> *m)</td></tr>
+<tr class="separator:ac196f6ddb2841366bff959a315e22efc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >pnet - easly make petri nets in C/C++ code. This library can create high level timed petri nets, with support for nesting, negated arcs, reset arcs, inputs and outputs and tools for analisys, simulation and compiling petri nets to other forms of code. Is intended for embedding!</p>

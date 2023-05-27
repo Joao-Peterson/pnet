@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include "pnet.h"
+#include "src/pnet.h"
 
 // time precision for testing
 #define TIME_PRECISION_MS (10)
@@ -915,6 +915,32 @@ int main(int argc, char **argv){
     );
 
     pnet_delete(pnet);
+
+    // #############################################################################
+    // Test matrix serialization
+
+    pnet_matrix_t *mserial = pnet_matrix_new(4, 4,
+        0, 0, 0, 1,
+        64, 0, 0, 1,
+        0, 0, 0, 0,
+        0, 0, INT32_MAX, 16
+    );
+
+    size_t bytes;
+    uint8_t *serialized_matrix = pnet_matrix_serialize(mserial, &bytes);
+
+    uint32_t testserial[] = {
+        4, 4,
+        0x70000000, 3, 1,
+        0x70000001, 0, 64, 3, 1,
+        0x70000003, 2, INT32_MAX, 3, 16
+    };
+
+    test(bytes == (sizeof(testserial)), "Test matrix serialization bytes written is equal to size of expected");
+    test(!memcmp(serialized_matrix, testserial, sizeof(testserial)), "Test matrix serialization bytes is equal to expected");
+
+    free(serialized_matrix);
+    pnet_matrix_delete(mserial);
 
     // #############################################################################
     test_summary();
