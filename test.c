@@ -927,13 +927,13 @@ int main(int argc, char **argv){
     );
 
     size_t bytes;
-    uint8_t *serialized_matrix = pnet_matrix_serialize(mserial, &bytes);
+    void *serialized_matrix = pnet_matrix_serialize(mserial, &bytes);
 
     uint32_t testserial[] = {
         4, 4,
-        0x70000000, 3, 1,
-        0x70000001, 0, 64, 3, 1,
-        0x70000003, 2, INT32_MAX, 3, 16
+        0x80000000, 3, 1,
+        0x80000001, 0, 64, 3, 1,
+        0x80000003, 2, INT32_MAX, 3, 16
     };
 
     test(bytes == (sizeof(testserial)), "Test matrix serialization bytes written is equal to size of expected");

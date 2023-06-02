@@ -441,17 +441,25 @@ pnet_matrix_t *pnet_matrix_extract_col(pnet_matrix_t *m, size_t x){
     return ret;
 }
 
-void pushtoblock(uint8_t *block, size_t *size_allocated, size_t *size_written, size_t size_min_realloc, size_t value_size, void *value){
-    if((*size_written + value_size) >= *size_allocated){
-        *size_allocated += size_min_realloc;
-        block = realloc(block, *size_allocated);
+void pushtoblock(uint32_t **block, size_t *size_allocated, size_t *size_written, size_t size_min_realloc, uint32_t value){
+    if((*size_written + sizeof(value)) >= *size_allocated){
+        (*size_allocated) += size_min_realloc;
+
+        // was using realloc, but valgrind kept bringing up an uninitialized error, so calloc to the rescue to set everything to 0 before hand
+        // void *tmp = realloc(*block, *size_allocated);
+        // *block = tmp;
+        void *tmp = calloc(*size_allocated, 1);
+        memcpy(tmp, *block, *size_written);
+        free(*block);
+        *block = tmp;
     }
 
-    memcpy((block + (*size_written)), value, value_size);
-    *size_written += value_size;
+    // memcpy(((*block) + (*size_written)), value, value_size);
+    (*block)[(*size_written)/sizeof(value)] = value;
+    *size_written += sizeof(value);
 }
 
-uint8_t *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written){
+void *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written){
     // checks
     if(m == NULL){
         if(bytes_written != NULL) *bytes_written = 0;
@@ -464,7 +472,7 @@ uint8_t *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written){
     } 
     
     // small amount to start, header + one full row
-    size_t data_allocated = sizeof(pnet_matrix_header_t) + m->x * sizeof(int32_t);
+    size_t data_allocated = sizeof(pnet_matrix_header_t) + m->x * sizeof(int32_t) * 2;
     uint32_t *data = malloc(data_allocated);
 
     pnet_matrix_header_t header = {
@@ -485,38 +493,48 @@ uint8_t *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written){
 
             if(!rowindexed){
                 uint32_t row_index = y | 0x80000000;
-                pushtoblock(data, &data_allocated, &data_written, header.x, sizeof(row_index), &row_index);                 // row
+
+                pushtoblock(&data, &data_allocated, &data_written, 
+                    header.x * sizeof(uint32_t), row_index);                        // row
+
                 rowindexed = true;
             }
 
-            pushtoblock(data, &data_allocated, &data_written, header.x, sizeof(x), &x);                                     // col for value
+            pushtoblock(&data, &data_allocated, &data_written, 
+                header.x * sizeof(uint32_t), x);                                    // col for value
+
             int32_t value = (int32_t)(m->m[y][x]); 
-            pushtoblock(data, &data_allocated, &data_written, header.x, sizeof(value), &value);                             // value
+            
+            pushtoblock(&data, &data_allocated, &data_written, 
+                header.x * sizeof(uint32_t), value);                                // value
         }
     }
 
     if(bytes_written != NULL) 
         *bytes_written = data_written;
 
-    return data;
+    return (void*)data;
 }
 
-pnet_matrix_t *pnet_matrix_deserialize(uint8_t *data, size_t data_size){
+pnet_matrix_t *pnet_matrix_deserialize(void *data, size_t data_size){
     if(data == NULL || data_size < sizeof(uint32_t)) return NULL;
     
     pnet_matrix_header_t *header = (pnet_matrix_header_t*)data;                     // ooga booga
     pnet_matrix_t *m = pnet_matrix_new_zero(header->x, header->y);
 
+    uint32_t *data_cursor = (uint32_t*)&(header->first_byte);
+
     uint32_t row = 0;
-    for(size_t data_read = 0; data_read < data_size; data_read += sizeof(uint32_t)){
-        if(*(data + data_read) & 0x80000000){                                       // on new row
-            row = *(data + data_read) & (~0x80000000);
+    size_t cells = data_size / sizeof(uint32_t);
+    for(size_t data_read = 0; data_read < cells; data_read += 1){
+        if(data_cursor[data_read] & 0x80000000){                                // on new row
+            row = data_cursor[data_read] & (~0x80000000);
             continue;
         }
 
-        uint32_t col = *(data + data_read);
-        data_read += sizeof(col);
-        int32_t value = (int32_t) *(data + data_read);
+        uint32_t col = data_cursor[data_read];
+        data_read += 1;
+        int32_t value = (int32_t)data_cursor[data_read];
 
         m->m[row][col] = value;
     }

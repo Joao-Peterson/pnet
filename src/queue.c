@@ -47,6 +47,7 @@ void queue_delete(queue_t *queue){
 			free(node->prev->value);
 			free(node->prev);
 		}
+		free(queue->last->value);
 		free(queue->last);
 	}
 	free(queue);

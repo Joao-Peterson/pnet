@@ -170,7 +170,7 @@ pnet_matrix_t *pnet_matrix_extract_col(pnet_matrix_t *m, size_t x);
  * @param m: the pnet_matrix
  * @param bytes_written: the bytes written are wrote here
  */
-uint8_t *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written);
+void *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written);
 
 /**
  * @brief deserialize a matrix
@@ -178,6 +178,6 @@ uint8_t *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written);
  * @param data_size: the actual size of the data array in bytes
  * @return a pnet_matrix
  */
-pnet_matrix_t *pnet_matrix_deserialize(uint8_t *data, size_t data_size);
+pnet_matrix_t *pnet_matrix_deserialize(void *data, size_t data_size);
 
 #endif
