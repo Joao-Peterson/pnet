@@ -2,6 +2,42 @@
 #include "pnet_error_priv.h"
 #include "queue.h"
 
+// ------------------------------ Private Types ------------------------------------
+
+/**
+ * @brief header for the pnet file
+ */
+#pragma pack(push,1)
+typedef struct{
+    char magic[4];                                                                  /**< magic file number. Always: "PNET" */
+    uint8_t valid;                                                                  /**< true if pnet passed the pnet_check() validation call */
+    uint8_t matrix_size;                                                            /**< size for the serialized matrices. Ex: 32, 16 (bits) */
+    uint32_t size;                                                                  /**< totol size of the matrices data, everything after the header, num_outputs */
+    uint32_t num_places;                                                            /**< number of places */
+    uint32_t num_transitions;                                                       /**< number of transitions */
+    uint32_t num_inputs;                                                            /**< number of inputs */
+    uint32_t num_outputs;                                                           /**< number of outputs */
+
+    uint32_t neg_arcs_map_size;                                                     /**< size for first matrix on the pnet */
+    uint8_t neg_arcs_map_first_byte;                                                /**< first byte of the serialized matrix */
+    /**
+     * ...
+     * neg_arcs_map
+     * pos_arcs_map
+     * inhibit_arcs_map
+     * reset_arcs_map
+     * places_init
+     * transitions_delay
+     * inputs_map
+     * outputs_map
+     * places
+     * sensitive_transitions
+     * outputs
+     * inputs_last
+    */
+}pnet_header_t;
+#pragma(pop)
+
 // ------------------------------ Private functions --------------------------------
 
 // set outputs accordingly to the places
@@ -224,8 +260,8 @@ pnet_t *m_pnet_new(
 
     pnet->places = pnet_matrix_duplicate(pnet->places_init);
     pnet->sensitive_transitions = pnet_matrix_new_zero(pnet->num_transitions, 1);
-    pnet->inputs_last = pnet_matrix_new_zero(pnet->num_inputs, 1);
-    pnet->outputs = pnet_matrix_new_zero(pnet->num_outputs, 1);
+    pnet->inputs_last = pnet->num_inputs ? pnet_matrix_new_zero(pnet->num_inputs, 1) : NULL;
+    pnet->outputs = pnet->num_outputs ? pnet_matrix_new_zero(pnet->num_outputs, 1) : NULL;
     
     if(transitions_delay != NULL && function == NULL){
         pnet_set_error(pnet_info_no_callback_function_was_passed_while_using_timed_transitions_watch_out);
@@ -800,4 +836,99 @@ void pnet_print(pnet_t *pnet){
     printf("\n");
     pnet_matrix_print(pnet->outputs, "output");
     printf("#############################################\n");
+}
+
+void *pnet_serialize(pnet_t *pnet, size_t *size){
+    size_t data_size = 0;
+    uint8_t *data;
+    
+    pnet_matrix_t *matrices[] = {
+        pnet->neg_arcs_map,
+        pnet->pos_arcs_map,
+        pnet->inhibit_arcs_map,
+        pnet->reset_arcs_map,
+        pnet->places_init,
+        pnet->transitions_delay,
+        pnet->inputs_map,
+        pnet->outputs_map,
+        pnet->places,
+        pnet->sensitive_transitions,
+        pnet->outputs,
+        pnet->inputs_last,
+    };
+
+    const int matrices_qty = sizeof(matrices)/sizeof(pnet_matrix_t*);
+
+    void *m_serials[matrices_qty];
+    size_t m_sizes[matrices_qty];
+
+    for(int i = 0; i < matrices_qty; i++){
+        if(matrices[i] == NULL){
+            data_size += sizeof(uint32_t);
+            m_serials[i] = NULL;
+            continue;
+        }
+        
+        size_t msize = 0;
+        void *m = pnet_matrix_serialize(matrices[i], &msize);
+
+        if(m == NULL){
+            for(int z = 0; z < matrices_qty; z++){
+                if(m_serials[z] == NULL)
+                    break;
+
+                free(m_serials[z]);
+            }
+
+            if(size != NULL)
+                *size = 0;
+            return NULL;
+        }
+
+        data_size += sizeof(uint32_t) + msize;
+        m_sizes[i] = msize;
+        m_serials[i] = m;
+    }
+
+    data = calloc(data_size + sizeof(pnet_header_t), 1);
+
+    pnet_header_t *header = (pnet_header_t*)data;
+    header->num_places      = pnet->num_places;
+    header->num_transitions = pnet->num_transitions;
+    header->num_inputs      = pnet->num_inputs;
+    header->num_outputs     = pnet->num_outputs;
+    header->valid           = pnet->valid;
+    header->matrix_size     = 32;
+    header->size            = data_size;
+    memcpy(header->magic, "PNET", 4);
+
+    uint32_t *cursor = &(header->neg_arcs_map_size); 
+
+    for(int i = 0; i < matrices_qty; i++){
+        if(m_serials[i] == NULL){
+            cursor[0] = 0;
+            cursor++;
+        }
+        else{
+            cursor[0] = m_sizes[i];
+            memcpy(&(cursor[1]), m_serials[i], m_sizes[i]);
+            cursor += (m_sizes[i] / sizeof(*cursor)) + 1;
+            free(m_serials[i]);
+        }
+    }
+
+    if(size != NULL)
+        *size = (data_size + sizeof(pnet_header_t) - sizeof(uint32_t) - sizeof(uint8_t));
+
+    return (void*)data;
+}
+
+void pnet_save(pnet_t *pnet, char *filename){
+    size_t size;
+    void *data = pnet_serialize(pnet, &size);
+    if(data == NULL) return;
+    printf("size: %d\n", size);
+    FILE *file = fopen(filename, "w+b");
+    fwrite(data, size, 1, file);
+    fclose(file);
 }

@@ -33,7 +33,6 @@ typedef struct{
     int **m;                                                                        /**< pointer to an array of size y that contains pointers to rows of size x */
 }pnet_matrix_t;
 
-#pragma pack(push,1)
 /**
  * @brief defines a header for serialized pnet matrices
  */
@@ -42,7 +41,6 @@ typedef struct{
     uint32_t y;
     uint8_t first_byte;
 }pnet_matrix_header_t;
-#pragma(pop)
 
 // /**
 //  * @brief matrix of string type, can be created by calling matrix_string_new() or v_matrix_string_new()
@@ -168,8 +166,18 @@ pnet_matrix_t *pnet_matrix_extract_col(pnet_matrix_t *m, size_t x);
 
 /**
  * @brief serialize a matrix
- * @example "matrix serialization": [[0, 255], [[2, 2]] -> 0000000000000001000000FF0000000100000000000000020000000100000002
+ * @note "matrix serialization": [[0, 255], [[2, 2]] -> 80000000 00000001 000000FF 80000001 00000000 00000002 00000001 00000002
+ * @param m: the pnet_matrix
+ * @param bytes_written: the bytes written are wrote here
  */
-uint8_t *pnet_matrix_serialize(pnet_matrix_t *m);
+void *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written);
+
+/**
+ * @brief deserialize a matrix
+ * @param data: serialized byte array, it's not freed automatically
+ * @param data_size: the actual size of the data array in bytes
+ * @return a pnet_matrix
+ */
+pnet_matrix_t *pnet_matrix_deserialize(void *data, size_t data_size);
 
 #endif

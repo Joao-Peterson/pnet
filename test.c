@@ -957,11 +957,59 @@ int main(int argc, char **argv){
 
     pnet_matrix_t *deserialized_matrix = pnet_matrix_deserialize(serialized_matrix, bytes);
 
-    test(pnet_matrix_cmp_eq(mserial, deserialized_matrix), "Compare if matrix == deserialize(serialize(matrixm))");
+    test(pnet_matrix_cmp_eq(mserial, deserialized_matrix), "Compare if matrix == deserialize(serialize(matrix))");
 
     free(serialized_matrix);
     pnet_matrix_delete(mserial);
     pnet_matrix_delete(deserialized_matrix);
+
+    // #############################################################################
+    // Test pnet serialization
+
+    pnet = pnet_new(
+        pnet_arcs_map_new(3,4,
+            -1, 0, 0,
+             0,-1, 0,
+             0, 0,-1,
+             0, 0, 0
+        ),
+        pnet_arcs_map_new(3,4,
+             0, 0, 1,
+             1, 0, 0,
+             0, 1, 0,
+             0, 0, 0
+        ),
+        pnet_arcs_map_new(3,4,
+             0, 1, 0,
+             0, 0, 0,
+             0, 0, 0,
+             0, 0, 0
+        ),
+        pnet_arcs_map_new(3,4,
+             0, 0, 0,
+             0, 0, 0,
+             0, 0, 0,
+             0, 1, 0
+        ),
+        pnet_places_init_new(4,
+            1,0,0,1
+        ),
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    );
+
+    if(pnet != NULL){
+        pnet_fire(pnet, NULL);
+    }
+
+    pnet_save(pnet, "file/testfile-sample1.pnet");
+
+    test(1, "Test pnet serialization");
+
+    pnet_delete(pnet);
 
     // #############################################################################
     test_summary();

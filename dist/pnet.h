@@ -622,4 +622,14 @@ void pnet_print(pnet_t *pnet);
  */
 void pnet_sense(pnet_t *pnet);
 
+/**
+ * @brief serializes a petri net to a file format, including internal state!
+ */
+void *pnet_serialize(pnet_t *pnet, size_t *size);
+
+/**
+ * @brief serializes a petri net and save it to a file
+ */
+void pnet_save(pnet_t *pnet, char *filename);
+
 #endif

@@ -173,9 +173,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>pnet_matrix_set_all</
 <a class="el" href="structpnet__matrix__t.html">pnet_matrix_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>pnet_matrix_extract_col</b> (<a class="el" href="structpnet__matrix__t.html">pnet_matrix_t</a> *m, size_t x)</td></tr>
 <tr class="memdesc:acce0746fe48536e0f353dac3ecee8261"><td class="mdescLeft">&#160;</td><td class="mdescRight">returns a columns from matrix <br /></td></tr>
 <tr class="separator:acce0746fe48536e0f353dac3ecee8261"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac196f6ddb2841366bff959a315e22efc"><td class="memItemLeft" align="right" valign="top"><a id="ac196f6ddb2841366bff959a315e22efc" name="ac196f6ddb2841366bff959a315e22efc"></a>
-uint8_t *&#160;</td><td class="memItemRight" valign="bottom"><b>pnet_matrix_serialize</b> (<a class="el" href="structpnet__matrix__t.html">pnet_matrix_t</a> *m)</td></tr>
-<tr class="separator:ac196f6ddb2841366bff959a315e22efc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00f6068453842c2e5ae50d976046dae9"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pnet__matrix_8h.html#a00f6068453842c2e5ae50d976046dae9">pnet_matrix_serialize</a> (<a class="el" href="structpnet__matrix__t.html">pnet_matrix_t</a> *m, size_t *bytes_written)</td></tr>
+<tr class="memdesc:a00f6068453842c2e5ae50d976046dae9"><td class="mdescLeft">&#160;</td><td class="mdescRight">serialize a matrix  <a href="pnet__matrix_8h.html#a00f6068453842c2e5ae50d976046dae9">More...</a><br /></td></tr>
+<tr class="separator:a00f6068453842c2e5ae50d976046dae9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ae630b6b650a2b55a0a5533b5c91e9a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structpnet__matrix__t.html">pnet_matrix_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pnet__matrix_8h.html#a9ae630b6b650a2b55a0a5533b5c91e9a">pnet_matrix_deserialize</a> (void *data, size_t data_size)</td></tr>
+<tr class="memdesc:a9ae630b6b650a2b55a0a5533b5c91e9a"><td class="mdescLeft">&#160;</td><td class="mdescRight">deserialize a matrix  <a href="pnet__matrix_8h.html#a9ae630b6b650a2b55a0a5533b5c91e9a">More...</a><br /></td></tr>
+<tr class="separator:a9ae630b6b650a2b55a0a5533b5c91e9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >pnet - easly make petri nets in C/C++ code. This library can create high level timed petri nets, with support for nesting, negated arcs, reset arcs, inputs and outputs and tools for analisys, simulation and compiling petri nets to other forms of code. Is intended for embedding!</p>
@@ -184,6 +187,44 @@ uint8_t *&#160;</td><td class="memItemRight" valign="bottom"><b>pnet_matrix_seri
 <p >Pnet matrices are simple matrices made using dynamic allocated int's that are used inside the <a class="el" href="structpnet__t.html" title="struct that represents a petri net">pnet_t</a> type to represent places, transitions, inputs and outputs and all internal logic. Some helper function are implemented for internal use but exposed here if needed. <br  />
  </p>
 </div><h2 class="groupheader">Function Documentation</h2>
+<a id="a9ae630b6b650a2b55a0a5533b5c91e9a" name="a9ae630b6b650a2b55a0a5533b5c91e9a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9ae630b6b650a2b55a0a5533b5c91e9a">&#9670;&#160;</a></span>pnet_matrix_deserialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structpnet__matrix__t.html">pnet_matrix_t</a> * pnet_matrix_deserialize </td>
+          <td>(</td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>data_size</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>deserialize a matrix </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">data</td><td>serialized byte array, it's not freed automatically </td></tr>
+    <tr><td class="paramname">data_size</td><td>the actual size of the data array in bytes </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a pnet_matrix </dd></dl>
+
+</div>
+</div>
 <a id="add2d75dee316840a71b0389347d37ff9" name="add2d75dee316840a71b0389347d37ff9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#add2d75dee316840a71b0389347d37ff9">&#9670;&#160;</a></span>pnet_matrix_get()</h2>
 
@@ -226,6 +267,44 @@ uint8_t *&#160;</td><td class="memItemRight" valign="bottom"><b>pnet_matrix_seri
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>0 if value not found </dd></dl>
+
+</div>
+</div>
+<a id="a00f6068453842c2e5ae50d976046dae9" name="a00f6068453842c2e5ae50d976046dae9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a00f6068453842c2e5ae50d976046dae9">&#9670;&#160;</a></span>pnet_matrix_serialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void * pnet_matrix_serialize </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structpnet__matrix__t.html">pnet_matrix_t</a> *&#160;</td>
+          <td class="paramname"><em>m</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t *&#160;</td>
+          <td class="paramname"><em>bytes_written</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>serialize a matrix </p>
+<dl class="section note"><dt>Note</dt><dd>"matrix serialization": [[0, 255], [[2, 2]] -&gt; 80000000 00000001 000000FF 80000001 00000000 00000002 00000001 00000002 </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">m</td><td>the pnet_matrix </td></tr>
+    <tr><td class="paramname">bytes_written</td><td>the bytes written are wrote here </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
