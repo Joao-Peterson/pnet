@@ -12,7 +12,7 @@
 # Options -------------------------------------------------------
 
 CC=gcc
-C_FLAGS=-fpic -Wall
+C_FLAGS=-fpic -Wall -Werror -Wpedantic
 C_FLAGS_RELEASE=-O2
 C_FLAGS_DEBUG=-g
 I_FLAGS=-Isrc
@@ -57,10 +57,10 @@ dist :
 	sed -r -i 's/(badge\/Version-)([0-9]\.[0-9]\.[0-9])/\1$(VERSION)/g' README.md $(DIST_DIR)/README.md
 	sed -r -i 's/(PROJECT_NUMBER\s+= )([0-9]\.[0-9]\.[0-9])/\1$(VERSION)/g' $(DOC_DIR)/Doxyfile
 
-libpnet.a : src/pnet.o src/queue.o src/pnet_matrix.o src/pnet_error.o
+libpnet.a : src/pnet.o src/queue.o src/pnet_matrix.o src/pnet_error.o src/crc32.o
 	$(AR) $(AR_FLAGS) $(addprefix $(BUILD_DIR)/, $@) $(addprefix $(BUILD_DIR)/, $(notdir $^))
 
-libpnet.so : src/pnet.o src/queue.o src/pnet_matrix.o src/pnet_error.o
+libpnet.so : src/pnet.o src/queue.o src/pnet_matrix.o src/pnet_error.o src/crc32.o
 	$(CC) -shared $(addprefix $(BUILD_DIR)/, $(notdir $^)) -o $(addprefix $(BUILD_DIR)/, $@)
 
 # Other recipes (Dont edit) ----------------------------------------

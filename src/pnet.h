@@ -354,10 +354,16 @@ typedef enum{
     pnet_error_input_matrix_argument_size_doesnt_match_the_input_size_on_the_pnet_provided,
     pnet_error_thread_could_not_be_created,
     pnet_error_matrix_passed_is_null,
+    pnet_error_matrix_minimal_size_is_1_by_1,
     pnet_error_matrix_index_x_y_out_of_range,
     pnet_error_matrices_should_be_of_the_same_size,
     pnet_error_matrices_should_be_square_matrices,
     pnet_error_matrices_should_be_tranposed_equivalents,
+    pnet_error_matrix_too_big_to_serialize,
+    pnet_info_pnet_not_valid_to_serialize,
+    pnet_error_file_invalid_filetype,
+    pnet_error_file_invalid_checksum,
+    pnet_error_file_corrupted_data,
 }pnet_error_t;
 
 /**
@@ -378,10 +384,10 @@ char *pnet_get_error_msg(void);
  * @brief type of events used in the input/transition mapping 
  */
 typedef enum{
-    pnet_event_none         = 0b00,                                                 /**< No input event, transition will trigger if sensibilized. Same as 0 */
-    pnet_event_pos_edge     = 0b01,                                                 /**< The input must be 0 then 1 so the transition can trigger */
-    pnet_event_neg_edge     = 0b10,                                                 /**< The input must be 1 then 0 so the transition can trigger */
-    pnet_event_any_edge     = 0b11,                                                 /**< The input must be change state from 1 to 0 or vice versa */
+    pnet_event_none         = 0x00,                                                 /**< No input event, transition will trigger if sensibilized. Same as 0 */
+    pnet_event_pos_edge     = 0x01,                                                 /**< The input must be 0 then 1 so the transition can trigger */
+    pnet_event_neg_edge     = 0x02,                                                 /**< The input must be 1 then 0 so the transition can trigger */
+    pnet_event_any_edge     = 0x03,                                                 /**< The input must be change state from 1 to 0 or vice versa */
     pnet_event_t_max                                                                /**< Enumerator check value, don't use! */
 }pnet_event_t;
 
@@ -631,5 +637,15 @@ void *pnet_serialize(pnet_t *pnet, size_t *size);
  * @brief serializes a petri net and save it to a file
  */
 void pnet_save(pnet_t *pnet, char *filename);
+
+/**
+ * @brief deserialize a pnet
+ */
+pnet_t *pnet_deserialize(void *data, size_t size, pnet_callback_t callback, void *callback_data);
+
+/**
+ * @brief read .pnet file and load into a pnet_t
+ */
+pnet_t *pnet_load(char *filename, pnet_callback_t callback, void *callback_data);
 
 #endif

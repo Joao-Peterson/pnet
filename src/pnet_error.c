@@ -41,10 +41,16 @@ static const char* error_msg_list[] = {
     PNET_DEF_ERR(pnet_error_input_matrix_argument_size_doesnt_match_the_input_size_on_the_pnet_provided),
     PNET_DEF_ERR(pnet_error_thread_could_not_be_created),
     PNET_DEF_ERR(pnet_error_matrix_passed_is_null),
+    PNET_DEF_ERR(pnet_error_matrix_minimal_size_is_1_by_1),
     PNET_DEF_ERR(pnet_error_matrix_index_x_y_out_of_range),
     PNET_DEF_ERR(pnet_error_matrices_should_be_of_the_same_size),
     PNET_DEF_ERR(pnet_error_matrices_should_be_square_matrices),
-    PNET_DEF_ERR(pnet_error_matrices_should_be_tranposed_equivalents)
+    PNET_DEF_ERR(pnet_error_matrices_should_be_tranposed_equivalents),
+    PNET_DEF_ERR(pnet_error_matrix_too_big_to_serialize),
+    PNET_DEF_ERR(pnet_info_pnet_not_valid_to_serialize),
+    PNET_DEF_ERR(pnet_error_file_invalid_filetype),
+    PNET_DEF_ERR(pnet_error_file_invalid_checksum),
+    PNET_DEF_ERR(pnet_error_file_corrupted_data)
 };
 
 // return global error code

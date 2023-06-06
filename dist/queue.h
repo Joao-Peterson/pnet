@@ -1,3 +1,17 @@
+/**
+ * @file queue.h
+ * 
+ * pnet - easly make petri nets in C/C++ code. This library can create high level timed petri nets, with support for nesting,
+ * negated arcs, reset arcs, inputs and outputs and tools for analisys, simulation and compiling petri nets to other forms of code.
+ * Is intended for embedding!
+ * 
+ * Created by João Peterson Scheffer - 2023. Version 1.1.1.
+ * 
+ * Licensed under the MIT License. Please refeer to the LICENSE file in the project root for license information.
+ * 
+ * A queue for use with timed transitions on threads  
+ */
+
 #ifndef _QUEUE_HEADER_
 #define _QUEUE_HEADER_
 

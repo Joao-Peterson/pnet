@@ -358,6 +358,8 @@ typedef enum{
     pnet_error_matrices_should_be_of_the_same_size,
     pnet_error_matrices_should_be_square_matrices,
     pnet_error_matrices_should_be_tranposed_equivalents,
+    pnet_error_matrix_too_big_to_serialize,
+    pnet_info_pnet_not_valid_to_serialize,
 }pnet_error_t;
 
 /**

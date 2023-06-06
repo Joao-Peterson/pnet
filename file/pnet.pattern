@@ -1,8 +1,10 @@
 struct pnet_header_t{
     char magic[0x04];
+    u16 version;
     u8 valid;
     u8 matrix_size;
     u32 size;
+    be u32 crc32;
     u32 num_places;
     u32 num_transitions;
     u32 num_inputs;

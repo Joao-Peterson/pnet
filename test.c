@@ -929,6 +929,8 @@ int main(int argc, char **argv){
     size_t bytes;
     void *serialized_matrix = pnet_matrix_serialize(mserial, &bytes);
 
+    test(serialized_matrix != NULL && pnet_get_error() == pnet_info_ok, "Test serialization of matrix");
+
     uint32_t testserial[] = {
         4, 4,
         0x80000000, 3, 1,
@@ -939,24 +941,9 @@ int main(int argc, char **argv){
     test(bytes == (sizeof(testserial)), "Test matrix serialization bytes written is equal to size of expected");
     test(!memcmp(serialized_matrix, testserial, sizeof(testserial)), "Test matrix serialization bytes is equal to expected");
 
-    free(serialized_matrix);
-    pnet_matrix_delete(mserial);
-
-    // #############################################################################
-    // Test matrix serialization/deserialization
-
-    mserial = pnet_matrix_new(4, 4,
-        0, 0, 0, 1,
-        64, 0, 0, 1,
-        0, 0, 0, 0,
-        0, 0, INT32_MAX, 16
-    );
-
-    bytes = 0;
-    serialized_matrix = pnet_matrix_serialize(mserial, &bytes);
-
     pnet_matrix_t *deserialized_matrix = pnet_matrix_deserialize(serialized_matrix, bytes);
 
+    test(deserialized_matrix != NULL && pnet_get_error() == pnet_info_ok, "Test deserialization of matrix");
     test(pnet_matrix_cmp_eq(mserial, deserialized_matrix), "Compare if matrix == deserialize(serialize(matrix))");
 
     free(serialized_matrix);
@@ -964,7 +951,56 @@ int main(int argc, char **argv){
     pnet_matrix_delete(deserialized_matrix);
 
     // #############################################################################
-    // Test pnet serialization
+    // Test matrix serialization edge cases
+
+    pnet_matrix_t *matrix_single = pnet_matrix_new(1, 1, 42);
+    pnet_matrix_t *matrix_max_doable = pnet_matrix_new_zero(0x00003DC3, 0x00003DC3);    // 1 Gb of memory for integers, a 158111 x 158111 matrix
+
+    test(
+        matrix_max_doable != NULL &&
+        pnet_get_error() == pnet_info_ok,
+        "Test creating big matrices"
+    );
+
+    size_t matrix_serial_edge_tmp_size;
+    void *matrix_serial_edge_tmp;
+    pnet_matrix_t *matrix_serial_edge_tmp_matrix;
+
+    // single
+    matrix_serial_edge_tmp = pnet_matrix_serialize(matrix_single, &matrix_serial_edge_tmp_size);
+    matrix_serial_edge_tmp_matrix = pnet_matrix_deserialize(matrix_serial_edge_tmp, matrix_serial_edge_tmp_size);
+
+    test(
+        pnet_get_error() == pnet_info_ok &&
+        matrix_serial_edge_tmp != NULL &&
+        matrix_serial_edge_tmp_matrix != NULL &&
+        pnet_matrix_cmp_eq(matrix_single, matrix_serial_edge_tmp_matrix),
+        "Test 1x1 deserialization(serialization)"
+    );
+
+    pnet_matrix_delete(matrix_serial_edge_tmp_matrix);
+    free(matrix_serial_edge_tmp);
+
+    // doable
+    matrix_serial_edge_tmp = pnet_matrix_serialize(matrix_max_doable, &matrix_serial_edge_tmp_size);
+    matrix_serial_edge_tmp_matrix = pnet_matrix_deserialize(matrix_serial_edge_tmp, matrix_serial_edge_tmp_size);
+
+    test(
+        pnet_get_error() == pnet_info_ok &&
+        matrix_serial_edge_tmp != NULL &&
+        matrix_serial_edge_tmp_matrix != NULL &&
+        pnet_matrix_cmp_eq(matrix_max_doable, matrix_serial_edge_tmp_matrix),
+        "Test max doable size deserialization(serialization)"
+    );
+
+    pnet_matrix_delete(matrix_serial_edge_tmp_matrix);
+    free(matrix_serial_edge_tmp);
+
+    pnet_matrix_delete(matrix_single);
+    pnet_matrix_delete(matrix_max_doable);
+
+    // #############################################################################
+    // Test pnet file
 
     pnet = pnet_new(
         pnet_arcs_map_new(3,4,
@@ -1007,7 +1043,15 @@ int main(int argc, char **argv){
 
     pnet_save(pnet, "file/testfile-sample1.pnet");
 
-    test(1, "Test pnet serialization");
+    pnet_t *pnet_loaded = pnet_load("file/testfile-sample1.pnet", NULL, NULL); 
+
+    test(
+        pnet_loaded != NULL &&
+        pnet_get_error() == pnet_info_ok &&
+        pnet->num_places == pnet_loaded->num_places &&
+        pnet_matrix_cmp_eq(pnet->places, pnet_loaded->places),
+        "Test pnet desrialization(serialization)"
+    );
 
     pnet_delete(pnet);
 

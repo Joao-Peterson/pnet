@@ -3,13 +3,18 @@
 #include "pnet.h"
 
 pnet_matrix_t *v_pnet_matrix_new(size_t x, size_t y, va_list *args){
+    if(x < 1 || y < 1){
+        pnet_set_error(pnet_error_matrix_minimal_size_is_1_by_1);
+        return NULL;
+    }
+
     pnet_matrix_t *matrix = (pnet_matrix_t*)calloc(1, sizeof(pnet_matrix_t));
     matrix->x = x;
     matrix->y = y;
-    matrix->m = (int**)calloc(y, sizeof(int*));
+    matrix->m = (int**)malloc(y * sizeof(int*));
 
     for(size_t i = 0; i < y; i++){
-        matrix->m[i] = (int*)calloc(x, sizeof(int));
+        matrix->m[i] = (int*)malloc(x * sizeof(int));
         for(size_t j = 0; j < x; j++){
             matrix->m[i][j] = va_arg(*args, int); 
         }
@@ -20,6 +25,11 @@ pnet_matrix_t *v_pnet_matrix_new(size_t x, size_t y, va_list *args){
 }
 
 pnet_matrix_t *pnet_matrix_new(size_t x, size_t y, ...){
+    if(x < 1 || y < 1){
+        pnet_set_error(pnet_error_matrix_minimal_size_is_1_by_1);
+        return NULL;
+    }
+    
     va_list args;
     va_start(args, y);
 
@@ -116,13 +126,18 @@ void pnet_matrix_modify(pnet_matrix_t *m, size_t new_x, size_t new_y){
 }
 
 pnet_matrix_t *pnet_matrix_new_zero(size_t x, size_t y){
+    if(x < 1 || y < 1){
+        pnet_set_error(pnet_error_matrix_minimal_size_is_1_by_1);
+        return NULL;
+    }
+    
     pnet_matrix_t *matrix = (pnet_matrix_t*)calloc(1, sizeof(pnet_matrix_t));
     matrix->x = x;
     matrix->y = y;
-    matrix->m = (int**)calloc(y, sizeof(int*));
+    matrix->m = (int**)malloc(y * sizeof(int*));
 
     for(size_t i = 0; i < y; i++){
-        matrix->m[i] = (int*)calloc(x, sizeof(int));
+        matrix->m[i] = (int*)malloc(x * sizeof(int));
         for(size_t j = 0; j < x; j++){
             matrix->m[i][j] = 0; 
         }
@@ -462,11 +477,13 @@ void pushtoblock(uint32_t **block, size_t *size_allocated, size_t *size_written,
 void *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written){
     // checks
     if(m == NULL){
+        pnet_set_error(pnet_error_matrix_passed_is_null);
         if(bytes_written != NULL) *bytes_written = 0;
         return NULL;
     }
      
     if(m->x >= 0x80000000){
+        pnet_set_error(pnet_error_matrix_too_big_to_serialize);
         if(bytes_written != NULL) *bytes_written = 0;
         return NULL;
     } 
@@ -510,6 +527,8 @@ void *pnet_matrix_serialize(pnet_matrix_t *m, size_t *bytes_written){
         }
     }
 
+    pnet_set_error(pnet_info_ok);
+
     if(bytes_written != NULL) 
         *bytes_written = data_written;
 
@@ -525,19 +544,20 @@ pnet_matrix_t *pnet_matrix_deserialize(void *data, size_t data_size){
     uint32_t *data_cursor = (uint32_t*)&(header->first_byte);
 
     uint32_t row = 0;
-    size_t cells = data_size / sizeof(uint32_t);
-    for(size_t data_read = 0; data_read < cells; data_read += 1){
-        if(data_cursor[data_read] & 0x80000000){                                // on new row
+    size_t cells = data_size / sizeof(uint32_t) - 2;                                // data size, minus the x y in the header
+    for(size_t data_read = 0; data_read < cells; data_read++){
+        if(data_cursor[data_read] & 0x80000000){                                    // on new row
             row = data_cursor[data_read] & (~0x80000000);
             continue;
         }
 
         uint32_t col = data_cursor[data_read];
-        data_read += 1;
+        data_read++;
         int32_t value = (int32_t)data_cursor[data_read];
 
         m->m[row][col] = value;
     }
 
+    pnet_set_error(pnet_info_ok);
     return m;
 }
