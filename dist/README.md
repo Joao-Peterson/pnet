@@ -1,4 +1,4 @@
-![](https://img.shields.io/github/license/Joao-Peterson/pnet) ![](https://img.shields.io/badge/Version-1.1.1-brightgreen) ![](https://img.shields.io/github/last-commit/Joao-Peterson/pnet)
+![](https://img.shields.io/github/license/Joao-Peterson/pnet) ![](https://img.shields.io/badge/Version-1.1.2-brightgreen) ![](https://img.shields.io/github/last-commit/Joao-Peterson/pnet)
 
 # pnet - a petri net library for C/C++
 
@@ -301,6 +301,7 @@ Positive and negative arcs are separated instead of using a single matrix for we
 
 # TODO
 
+- Allow a input to be used in multiple transitions 
 - Prioritized petri net, add priority to transitions
 - Make special calls for reading the output, or make up another type of abstraction that don't involves matrix_int_t 
 - Callback for output change

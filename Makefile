@@ -30,7 +30,7 @@ INSTALL_INC_DIR := /usr/local/include
 
 AUTHOR = João Peterson Scheffer
 YEAR = 2023
-VERSION = 1.1.1
+VERSION = 1.1.2
 
 # File recipes --------------------------------------------------
 
@@ -57,10 +57,10 @@ dist :
 	sed -r -i 's/(badge\/Version-)([0-9]\.[0-9]\.[0-9])/\1$(VERSION)/g' README.md $(DIST_DIR)/README.md
 	sed -r -i 's/(PROJECT_NUMBER\s+= )([0-9]\.[0-9]\.[0-9])/\1$(VERSION)/g' $(DOC_DIR)/Doxyfile
 
-libpnet.a : src/pnet.o src/queue.o src/pnet_matrix.o src/pnet_error.o src/crc32.o
+libpnet.a : src/pnet.o src/queue.o src/pnet_matrix.o src/pnet_error.o src/str.o src/crc32.o src/pnet_file.o src/il_weg_tpw04.o
 	$(AR) $(AR_FLAGS) $(addprefix $(BUILD_DIR)/, $@) $(addprefix $(BUILD_DIR)/, $(notdir $^))
 
-libpnet.so : src/pnet.o src/queue.o src/pnet_matrix.o src/pnet_error.o src/crc32.o
+libpnet.so : src/pnet.o src/queue.o src/pnet_matrix.o src/pnet_error.o src/str.o src/crc32.o src/pnet_file.o src/il_weg_tpw04.o
 	$(CC) -shared $(addprefix $(BUILD_DIR)/, $(notdir $^)) -o $(addprefix $(BUILD_DIR)/, $@)
 
 # Other recipes (Dont edit) ----------------------------------------
@@ -84,7 +84,7 @@ clear :
 	@rm -vf tests
 
 mem :
-	valgrind -s --leak-check=full --track-origins=yes ./tests
+	valgrind -s --leak-check=full --show-leak-kinds=all --track-origins=yes ./tests
 # valgrind --tool=callgrind $(TEST_EXE)
 
 doc : dist

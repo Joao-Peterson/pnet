@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['transition_5ft_0',['transition_t',['../structtransition__t.html',1,'']]]
+  ['string_5ft_0',['string_t',['../structstring__t.html',1,'']]]
 ];

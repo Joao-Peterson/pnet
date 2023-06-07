@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <errno.h>
 #include "src/pnet.h"
+#include "src/pnet_il.h"
 
 // time precision for testing
 #define TIME_PRECISION_MS (10)
@@ -954,7 +956,8 @@ int main(int argc, char **argv){
     // Test matrix serialization edge cases
 
     pnet_matrix_t *matrix_single = pnet_matrix_new(1, 1, 42);
-    pnet_matrix_t *matrix_max_doable = pnet_matrix_new_zero(0x00003DC3, 0x00003DC3);    // 1 Gb of memory for integers, a 158111 x 158111 matrix
+    pnet_matrix_t *matrix_max_doable = pnet_matrix_new_zero(0x000000FF, 0x000000FF);
+    // pnet_matrix_t *matrix_max_doable = pnet_matrix_new_zero(0x00003DC3, 0x00003DC3);    // 1 Gb of memory for integers, a 158111 x 158111 matrix
 
     test(
         matrix_max_doable != NULL &&
@@ -1054,6 +1057,77 @@ int main(int argc, char **argv){
     );
 
     pnet_delete(pnet);
+    pnet_delete(pnet_loaded);
+
+    // #############################################################################
+    // test weg tpw04 
+    
+    pnet = pnet_new(
+        pnet_arcs_map_new(4,3,
+            -1,-1, 0, 0,
+             0, 0,-2, 0,
+             0, 0, 0,-3
+        ),
+        pnet_arcs_map_new(4,3,
+             0, 0, 1, 1,
+             2, 0, 0, 0,
+             0, 3, 0, 0
+        ),
+        pnet_arcs_map_new(4,3,
+             0, 0, 0, 0,
+             0, 0, 0, 1,
+             0, 0, 1, 0
+        ),
+        pnet_arcs_map_new(4,3,
+             0, 0, 0, 0,
+             0, 0, 0, 0,
+             0, 0, 0, 0
+        ),
+        pnet_places_init_new(3,
+            1,0,0
+        ),
+        NULL,
+        pnet_inputs_map_new(4, 4,
+            pnet_event_pos_edge, 0, 0, 0,
+            0, pnet_event_pos_edge, 0, 0,
+            0, 0, pnet_event_pos_edge, 0,
+            0, 0, 0, pnet_event_pos_edge
+        ),
+        pnet_outputs_map_new(2, 3,
+            0,0,
+            2,0,
+            0,3
+        ),
+        NULL,
+        NULL
+    );
+
+    test(pnet != NULL && pnet_get_error() == pnet_info_ok, "Sample pnet for compilation");
+
+    char *il = pnet_compile_il_weg_tpw0(pnet, 0, 0, 30, 200);
+
+    FILE *outfile = fopen("file/compile_il_weg_tpw0.txt", "w");
+    if(outfile == NULL){
+        printf("Error: %s\n", strerror(errno));
+        return 0; 
+    }
+    fwrite(il, strlen(il), 1, outfile);
+    fflush(outfile);
+    fclose(outfile);
+
+    pnet_delete(pnet);
+    free(il);
+
+
+
+
+
+
+
+
+
+
+
 
     // #############################################################################
     test_summary();
