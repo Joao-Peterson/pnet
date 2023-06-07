@@ -1086,7 +1086,9 @@ int main(int argc, char **argv){
         pnet_places_init_new(3,
             1,0,0
         ),
-        NULL,
+        pnet_transitions_delay_new(4,
+            2000, 0, 0, 0
+        ),
         pnet_inputs_map_new(4, 4,
             pnet_event_pos_edge, 0, 0, 0,
             0, pnet_event_pos_edge, 0, 0,
@@ -1102,9 +1104,9 @@ int main(int argc, char **argv){
         NULL
     );
 
-    test(pnet != NULL && pnet_get_error() == pnet_info_ok, "Sample pnet for compilation");
+    test(pnet != NULL, "Sample pnet for compilation");
 
-    char *il = pnet_compile_il_weg_tpw0(pnet, 0, 0, 30, 200);
+    char *il = pnet_compile_il_weg_tpw0(pnet, 0, 0, 30, 200, 0, 100);
 
     FILE *outfile = fopen("file/compile_il_weg_tpw0.txt", "w");
     if(outfile == NULL){

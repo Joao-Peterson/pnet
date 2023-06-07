@@ -569,7 +569,7 @@ pnet_places_t *pnet_places_init_new(size_t places_num, ...);
 /**
  * @brief create new transitions delay object. It's freed by the calls that receive it as argument
  * @param transitions_num: number of transitions for the petri net 
- * @param ...: the values for each index in the matrix, comma separeted
+ * @param ...: the values for each delay, in milliseconds, comma separeted
  */
 pnet_transitions_t *pnet_transitions_delay_new(size_t transitions_num, ...);
 

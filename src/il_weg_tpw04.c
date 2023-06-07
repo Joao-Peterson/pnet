@@ -8,7 +8,7 @@
 #define INITIAL_RE 	8001
 
 // compiler
-char *pnet_compile_il_weg_tpw0(pnet_t *pnet, int input_offset, int output_offset, int transition_offset, int place_offset){
+char *pnet_compile_il_weg_tpw0(pnet_t *pnet, int input_offset, int output_offset, int transition_offset, int place_offset, int timer_offset, int timer_min){
 	if(pnet == NULL) return NULL;
 	string_t *buffer = string_new(0);	
 
@@ -22,8 +22,27 @@ char *pnet_compile_il_weg_tpw0(pnet_t *pnet, int input_offset, int output_offset
 	// LDP X000 OUT M000
 	for(size_t transition = 0; transition < pnet->num_transitions; transition++){	// transition trigger
 		for(size_t input = 0; input < pnet->num_inputs; input++){
+			if(!pnet->inputs_map->m[input][transition]) continue;
 
-			if(pnet->inputs_map->m[input][transition]){
+			if(pnet->transitions_delay != NULL && pnet->transitions_delay->m[0][transition]){ // for timed transitions
+				switch(pnet->inputs_map->m[input][transition]){
+					case pnet_event_pos_edge:
+						string_cat_fmt(buffer, "LDP X%u\nSET T%u\nK%u\nLD T%u\nMPS\nOUT M%u\nMPP\nRST T%u\n", BUFFER_SIZE, 
+							input + input_offset, transition + timer_offset, pnet->transitions_delay->m[0][transition] / timer_min, transition + timer_offset, transition + transition_offset, transition + timer_offset);
+						break;
+
+					case pnet_event_neg_edge:
+						string_cat_fmt(buffer, "LDF X%u\nSET T%u\nK%u\nLD T%u\nMPS\nOUT M%u\nMPP\nRST T%u\n", BUFFER_SIZE, 
+							input + input_offset, transition + timer_offset, pnet->transitions_delay->m[0][transition] / timer_min, transition + timer_offset, transition + transition_offset, transition + timer_offset);
+						break;
+
+					case pnet_event_any_edge:
+						string_cat_fmt(buffer, "LDP X%u\nORP X%u\nSET T%u\nK%u\nLD T%u\nMPS\nOUT M%u\nMPP\nRST T%u\n", BUFFER_SIZE, 
+							input + input_offset, input + input_offset, transition + timer_offset, pnet->transitions_delay->m[0][transition] / timer_min, transition + timer_offset, transition + transition_offset, transition + timer_offset);
+						break;
+				}
+			}
+			else{																	// regular transitions
 				switch(pnet->inputs_map->m[input][transition]){
 					case pnet_event_pos_edge:
 						string_cat_fmt(buffer, "LDP X%u\nOUT M%u\n", BUFFER_SIZE, input + input_offset, transition + transition_offset);
@@ -37,9 +56,9 @@ char *pnet_compile_il_weg_tpw0(pnet_t *pnet, int input_offset, int output_offset
 						string_cat_fmt(buffer, "LDP X%u\nORP X%u\nOUT M%u\n", BUFFER_SIZE, input + input_offset, input + input_offset, transition + transition_offset);
 						break;
 				}
-
-				break;
 			}
+
+			break;
 		}
 	}
 
