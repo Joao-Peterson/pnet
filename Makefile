@@ -30,7 +30,7 @@ INSTALL_INC_DIR := /usr/local/include
 
 AUTHOR = João Peterson Scheffer
 YEAR = 2023
-VERSION = 1.1.2
+VERSION = 1.1.3
 
 # File recipes --------------------------------------------------
 

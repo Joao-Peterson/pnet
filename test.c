@@ -1106,7 +1106,7 @@ int main(int argc, char **argv){
 
     test(pnet != NULL, "Sample pnet for compilation");
 
-    char *il = pnet_compile_il_weg_tpw0(pnet, 0, 0, 30, 200, 0, 100);
+    char *il = pnet_compile_il_weg_tpw04(pnet, 0, 0, 30, 200, 0, 100);
 
     FILE *outfile = fopen("file/compile_il_weg_tpw0.txt", "w");
     if(outfile == NULL){
