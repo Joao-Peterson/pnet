@@ -1,4 +1,4 @@
-![](https://img.shields.io/github/license/Joao-Peterson/pnet) ![](https://img.shields.io/badge/Version-1.1.2-brightgreen) ![](https://img.shields.io/github/last-commit/Joao-Peterson/pnet)
+![](https://img.shields.io/github/license/Joao-Peterson/pnet) ![](https://img.shields.io/badge/Version-1.1.3-brightgreen) ![](https://img.shields.io/github/last-commit/Joao-Peterson/pnet)
 
 # pnet - a petri net library for C/C++
 

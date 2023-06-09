@@ -7,7 +7,7 @@
  * 
  * Is intended for embedding!
  * 
- * Created by João Peterson Scheffer - 2023. Version 1.1.2.
+ * Created by João Peterson Scheffer - 2023. Version 1.1.3.
  * 
  * Licensed under the MIT License. Please reefer to the LICENSE file in the project root for license information.
  * 
@@ -303,7 +303,7 @@
  * negated arcs, reset arcs, inputs and outputs and tools for analisys, simulation and compiling petri nets to other forms of code.
  * Is intended for embedding!
  * 
- * Created by João Peterson Scheffer - 2023. Version 1.1.2.
+ * Created by João Peterson Scheffer - 2023. Version 1.1.3.
  * 
  * Licensed under the MIT License. Please refeer to the LICENSE file in the project root for license information.
  * 
@@ -569,7 +569,7 @@ pnet_places_t *pnet_places_init_new(size_t places_num, ...);
 /**
  * @brief create new transitions delay object. It's freed by the calls that receive it as argument
  * @param transitions_num: number of transitions for the petri net 
- * @param ...: the values for each index in the matrix, comma separeted
+ * @param ...: the values for each delay, in milliseconds, comma separeted
  */
 pnet_transitions_t *pnet_transitions_delay_new(size_t transitions_num, ...);
 

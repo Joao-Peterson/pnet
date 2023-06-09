@@ -5,7 +5,7 @@
  * negated arcs, reset arcs, inputs and outputs and tools for analisys, simulation and compiling petri nets to other forms of code.
  * Is intended for embedding!
  * 
- * Created by João Peterson Scheffer - 2023. Version 1.1.2.
+ * Created by João Peterson Scheffer - 2023. Version 1.1.3.
  * 
  * Licensed under the MIT License. Please refeer to the LICENSE file in the project root for license information.
  * 
