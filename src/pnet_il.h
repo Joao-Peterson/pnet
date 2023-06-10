@@ -27,6 +27,6 @@
  * @param trasnsitions_offset: offset in memory for transitions M 
  * @param places_offset: offset in memory for places D
  */
-char *pnet_compile_il_weg_tpw04(pnet_t *pnet, int input_offset, int output_offset, int transition_offset, int place_offset, int timer_offset, int timer_min);
+char *pnet_compile_il_weg_tpw04(pnet_t *pnet, int input_offset, int output_offset, int transition_offset, int place_offset, int timer_offset, int timer_min, int jump_offset);
 
 #endif

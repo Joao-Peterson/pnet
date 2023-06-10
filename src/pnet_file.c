@@ -227,6 +227,12 @@ void pnet_save(pnet_t *pnet, char *filename){
     void *data = pnet_serialize(pnet, &size);
     if(data == NULL) return;
     FILE *file = fopen(filename, "w+b");
+    
+    if(file == NULL){
+        free(data);
+        return;
+    }
+
     fwrite(data, size, 1, file);
     fclose(file);
     free(data);
