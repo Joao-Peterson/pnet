@@ -629,6 +629,11 @@ void pnet_print(pnet_t *pnet);
 void pnet_sense(pnet_t *pnet);
 
 /**
+ * @brief reset internal pnet state for places tokens, inputs and outputs to the initial state
+ */
+void pnet_reset(pnet_t *pnet);
+
+/**
  * @brief serializes a petri net to a file format, including internal state!
  */
 void *pnet_serialize(pnet_t *pnet, size_t *size);

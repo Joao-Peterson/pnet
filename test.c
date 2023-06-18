@@ -108,14 +108,8 @@ int main(int argc, char **argv){
     // #############################################################################
     // test no args
     pnet = pnet_new(
-        pnet_arcs_map_new(1,2,
-            -1,
-             0
-        ),
-        pnet_arcs_map_new(1,2,
-             0,
-             1
-        ),
+        NULL,
+        NULL,
         NULL,
         NULL,
         NULL,
@@ -557,6 +551,42 @@ int main(int argc, char **argv){
     
     pnet_matrix_delete(places);
     pnet_matrix_delete(transitions);
+    pnet_delete(pnet);
+
+    // #############################################################################
+    // Test weighted and reset arc
+    pnet = pnet_new(
+        pnet_arcs_map_new(1,1,
+            -1
+        ),
+        NULL,
+        NULL,
+        pnet_arcs_map_new(1, 1,
+            1
+        ),
+        pnet_places_init_new(1,
+            5
+        ),
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    );
+
+    if(pnet != NULL) 
+        pnet_fire(pnet, NULL);
+
+    places = pnet_matrix_new(1,1, 0);
+
+    test(
+        (pnet != NULL) && 
+        (pnet_get_error() == pnet_info_ok) &&
+        (pnet_matrix_cmp_eq(pnet->places, places)),
+        "Test weighted and reset arc"
+    );
+
+    pnet_matrix_delete(places);
     pnet_delete(pnet);
 
     // #############################################################################
@@ -1108,7 +1138,7 @@ int main(int argc, char **argv){
 
     char *il = pnet_compile_il_weg_tpw04(pnet, 0, 0, 30, 200, 0, 100, 0);
 
-    FILE *outfile = fopen("file/compile_il_weg_tpw0.txt", "w");
+    FILE *outfile = fopen("file/compile_il_weg_tpw04.txt", "w");
     if(outfile == NULL){
         printf("Error: %s\n", strerror(errno));
         return 0; 

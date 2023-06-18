@@ -40,17 +40,17 @@ char *pnet_compile_il_weg_tpw04(pnet_t *pnet, int input_offset, int output_offse
 			){ 																		// for timed transitions
 				switch(pnet->inputs_map->m[input][transition]){
 					case pnet_event_pos_edge:
-						string_cat_fmt(buffer, "LDP X%u\nSET T%u\nK%u\nLD T%u\n", BUFFER_SIZE, input + input_offset, transition + timer_offset, pnet->transitions_delay->m[0][transition] / timer_min, transition + timer_offset);
+						string_cat_fmt(buffer, "LDP X%u\nSET T%u K%u\nLD T%u\n", BUFFER_SIZE, input + input_offset, transition + timer_offset, pnet->transitions_delay->m[0][transition] / timer_min, transition + timer_offset);
 						string_cat_fmt(buffer, "MPS\nOUT M%u\nMRD\nRST T%u\n", BUFFER_SIZE, transition + transition_offset, transition + timer_offset);
 						break;
 
 					case pnet_event_neg_edge:
-						string_cat_fmt(buffer, "LDF X%u\nSET T%u\nK%u\nLD T%u\n", BUFFER_SIZE, input + input_offset, transition + timer_offset, pnet->transitions_delay->m[0][transition] / timer_min, transition + timer_offset);
+						string_cat_fmt(buffer, "LDF X%u\nSET T%u K%u\nLD T%u\n", BUFFER_SIZE, input + input_offset, transition + timer_offset, pnet->transitions_delay->m[0][transition] / timer_min, transition + timer_offset);
 						string_cat_fmt(buffer, "MPS\nOUT M%u\nMRD\nRST T%u\n", BUFFER_SIZE, transition + transition_offset, transition + timer_offset);
 						break;
 
 					case pnet_event_any_edge:
-						string_cat_fmt(buffer, "LDP X%u\nORP X%u\nSET T%u\nK%u\nLD T%u\n", BUFFER_SIZE, input + input_offset, input + input_offset, transition + timer_offset, pnet->transitions_delay->m[0][transition] / timer_min, transition + timer_offset);
+						string_cat_fmt(buffer, "LDP X%u\nORP X%u\nSET T%u K%u\nLD T%u\n", BUFFER_SIZE, input + input_offset, input + input_offset, transition + timer_offset, pnet->transitions_delay->m[0][transition] / timer_min, transition + timer_offset);
 						string_cat_fmt(buffer, "MPS\nOUT M%u\nMRD\nRST T%u\n", BUFFER_SIZE, transition + transition_offset, transition + timer_offset);
 						break;
 				}

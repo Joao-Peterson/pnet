@@ -646,7 +646,7 @@ void pnet_delete(pnet_t *pnet){
     free(pnet);
 }
 
-// check for sensibilized transitions, one transition is retuned at a time
+// check for sensibilized transitions
 // thread safe
 void pnet_sense(pnet_t *pnet){
     if(pnet == NULL){
@@ -791,6 +791,19 @@ void m_pnet_fire(pnet_t *pnet, pnet_matrix_t *inputs){
 void pnet_fire(pnet_t *pnet, pnet_inputs_t *inputs){
     m_pnet_fire(pnet, inputs != NULL ? inputs->values : NULL);
     free(inputs);
+}
+
+// reset pnet state
+void pnet_reset(pnet_t *pnet){
+    if(pnet == NULL){
+        pnet_set_error(pnet_error_pnet_struct_pointer_passed_as_argument_is_null);
+        return;
+    };
+
+    if(pnet->places != NULL)                pnet_matrix_copy(pnet->places_init, pnet->places);
+    if(pnet->inputs_last != NULL)           pnet_matrix_set_all(pnet->inputs_last, 0);
+    if(pnet->outputs != NULL)               pnet_matrix_set_all(pnet->outputs, 0);
+    if(pnet->sensitive_transitions != NULL) pnet_matrix_set_all(pnet->sensitive_transitions, 0);
 }
 
 // print the petri net 
